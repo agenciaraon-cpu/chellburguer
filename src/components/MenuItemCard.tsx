@@ -64,6 +64,11 @@ export function MenuItemCard({ item, onAdd }: Props) {
               >
                 <X size={20} />
               </button>
+              {item.category === 'burger' && (
+                <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white/90 text-xs px-2 py-1 rounded-md font-medium border border-white/10">
+                  Imagem real do produto
+                </div>
+              )}
             </div>
             
             <div className="p-5 flex flex-col">

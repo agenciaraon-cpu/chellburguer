@@ -25,7 +25,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   const [copiedPix, setCopiedPix] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
-  const deliveryFee = deliveryMode === 'delivery' ? 8.00 : 0;
+  const deliveryFee = deliveryMode === 'delivery' ? 10.00 : 0;
   const total = subtotal + deliveryFee;
 
   const handleCopyPix = () => {
@@ -174,7 +174,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
             <label className={`flex-1 flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${deliveryMode === 'delivery' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
               <input type="radio" name="deliveryMode" checked={deliveryMode === 'delivery'} onChange={() => setDeliveryMode('delivery')} className="hidden" />
               <span className="font-bold mb-1">Entrega</span>
-              <span className="text-xs text-orange-400">Taxa: R$ 8,00</span>
+              <span className="text-xs text-orange-400">Taxa: R$ 10,00</span>
             </label>
             <label className={`flex-1 flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${deliveryMode === 'pickup' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
               <input type="radio" name="deliveryMode" checked={deliveryMode === 'pickup'} onChange={() => setDeliveryMode('pickup')} className="hidden" />
