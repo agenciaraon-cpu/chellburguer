@@ -20,10 +20,13 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     number: '',
     reference: ''
   });
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'whatsapp'>('whatsapp');
+  const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
+  const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'pix' | 'card'>('whatsapp');
   const [copiedPix, setCopiedPix] = useState(false);
 
-  const total = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
+  const deliveryFee = deliveryMode === 'delivery' ? 8.00 : 0;
+  const total = subtotal + deliveryFee;
 
   const handleCopyPix = () => {
     navigator.clipboard.writeText(PIX_KEY);
@@ -32,7 +35,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   };
 
   const handleCheckout = () => {
-    if (!address.street || !address.neighborhood || !address.city || !address.number) {
+    if (deliveryMode === 'delivery' && (!address.street || !address.neighborhood || !address.city || !address.number)) {
       alert('Por favor, preencha o endereço de entrega corretamente.');
       return;
     }
@@ -49,23 +52,28 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
       }
     });
     
-    orderText += `\n*TOTAL:* R$ ${total.toFixed(2)}\n\n`;
+    orderText += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
+    if (deliveryMode === 'delivery') {
+      orderText += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
+    }
+    orderText += `*TOTAL:* R$ ${total.toFixed(2)}\n\n`;
     
-    orderText += `*ENDEREÇO DE ENTREGA:*\n`;
-    orderText += `${address.street}, Nº ${address.number}\n`;
-    orderText += `Bairro: ${address.neighborhood}\n`;
-    orderText += `Cidade: ${address.city}\n`;
-    if (address.reference) {
-      orderText += `Ref: ${address.reference}\n`;
+    if (deliveryMode === 'delivery') {
+      orderText += `*ENDEREÇO DE ENTREGA:*\n`;
+      orderText += `${address.street}, Nº ${address.number}\n`;
+      orderText += `Bairro: ${address.neighborhood}\n`;
+      orderText += `Cidade: ${address.city}\n`;
+      if (address.reference) {
+        orderText += `Ref: ${address.reference}\n`;
+      }
+    } else {
+      orderText += `*RETIRAR NO ESTABELECIMENTO*\n`;
     }
 
-    orderText += `\n*PAGAMENTO:* ${paymentMethod === 'pix' ? 'Pix pelo App (Comprovante a seguir)' : 'A combinar no WhatsApp'}`;
+    orderText += `\n*PAGAMENTO:* ${paymentMethod === 'pix' ? 'Pix pelo App (Comprovante a seguir)' : paymentMethod === 'card' ? 'Pagar na entrega com cartão' : 'A combinar no WhatsApp'}`;
 
     const encodedText = encodeURIComponent(orderText);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedText}`, '_blank');
-    
-    // Optional: clear cart after sending
-    // onClearCart();
   };
 
   if (cart.length === 0) {
@@ -136,38 +144,72 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
               </div>
             </div>
           ))}
-          <div className="p-4 bg-neutral-950/50 border-t border-neutral-800 rounded-b-2xl flex justify-between items-center">
-            <span className="text-neutral-400">Total do Pedido</span>
-            <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-              R$ {total.toFixed(2)}
-            </span>
+          <div className="p-4 bg-neutral-950/50 border-t border-neutral-800 rounded-b-2xl space-y-2">
+            <div className="flex justify-between items-center text-neutral-400">
+              <span>Subtotal</span>
+              <span>R$ {subtotal.toFixed(2)}</span>
+            </div>
+            {deliveryMode === 'delivery' && (
+              <div className="flex justify-between items-center text-neutral-400">
+                <span>Taxa de Entrega</span>
+                <span>R$ {deliveryFee.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center pt-2 border-t border-neutral-800/50">
+              <span className="text-neutral-300 font-bold">Total do Pedido</span>
+              <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                R$ {total.toFixed(2)}
+              </span>
+            </div>
           </div>
         </section>
 
-        {/* Address Form */}
+        {/* Delivery Options */}
         <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-5 space-y-4">
           <h2 className="text-lg font-bold flex items-center text-neutral-100">
             <MapPin size={20} className="text-orange-500 mr-2" />
-            Endereço de Entrega
+            Opções de Entrega
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-            </div>
-            <div>
-              <input type="text" placeholder="Número" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-            </div>
-            <div>
-              <input type="text" placeholder="Bairro" value={address.neighborhood} onChange={e => setAddress({...address, neighborhood: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-            </div>
-            <div className="md:col-span-2">
-              <input type="text" placeholder="Cidade" value={address.city} onChange={e => setAddress({...address, city: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-            </div>
-            <div className="md:col-span-2">
-              <input type="text" placeholder="Ponto de Referência (Opcional)" value={address.reference} onChange={e => setAddress({...address, reference: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-            </div>
+          <div className="flex gap-4">
+            <label className={`flex-1 flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${deliveryMode === 'delivery' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
+              <input type="radio" name="deliveryMode" checked={deliveryMode === 'delivery'} onChange={() => setDeliveryMode('delivery')} className="hidden" />
+              <span className="font-bold mb-1">Entrega</span>
+              <span className="text-xs text-orange-400">Taxa: R$ 8,00</span>
+            </label>
+            <label className={`flex-1 flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${deliveryMode === 'pickup' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
+              <input type="radio" name="deliveryMode" checked={deliveryMode === 'pickup'} onChange={() => setDeliveryMode('pickup')} className="hidden" />
+              <span className="font-bold mb-1">Retirar no local</span>
+              <span className="text-xs text-green-400">Grátis</span>
+            </label>
           </div>
         </section>
+
+        {/* Address Form (Only if Delivery) */}
+        {deliveryMode === 'delivery' && (
+          <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-5 space-y-4">
+            <h2 className="text-lg font-bold flex items-center text-neutral-100">
+              <MapPin size={20} className="text-neutral-500 mr-2" />
+              Endereço de Entrega
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              </div>
+              <div>
+                <input type="text" placeholder="Número" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              </div>
+              <div>
+                <input type="text" placeholder="Bairro" value={address.neighborhood} onChange={e => setAddress({...address, neighborhood: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              </div>
+              <div className="md:col-span-2">
+                <input type="text" placeholder="Cidade" value={address.city} onChange={e => setAddress({...address, city: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              </div>
+              <div className="md:col-span-2">
+                <input type="text" placeholder="Ponto de Referência (Opcional)" value={address.reference} onChange={e => setAddress({...address, reference: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Payment */}
         <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-5 space-y-4">
@@ -183,6 +225,14 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
                 {paymentMethod === 'whatsapp' && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full" />}
               </div>
               <span className="font-medium">Combinar no WhatsApp</span>
+            </label>
+
+            <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
+              <input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="hidden" />
+              <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'card' ? 'border-orange-500' : 'border-neutral-600'}`}>
+                {paymentMethod === 'card' && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full" />}
+              </div>
+              <span className="font-medium">Pagar na entrega com cartão</span>
             </label>
 
             <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'pix' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
