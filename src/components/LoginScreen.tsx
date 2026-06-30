@@ -9,6 +9,7 @@ interface Props {
 export function LoginScreen({ onLogin }: Props) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [imageError, setImageError] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,25 +22,24 @@ export function LoginScreen({ onLogin }: Props) {
     <div className="h-full overflow-y-auto bg-neutral-950 flex flex-col items-center justify-center p-6 text-neutral-100">
       <div className="w-full max-w-md bg-neutral-900 p-8 rounded-2xl shadow-2xl border border-neutral-800">
         <div className="flex flex-col items-center mb-8">
-          <img 
-            src="/image.png" 
-            alt="Chell Burger Logo" 
-            className="w-full max-w-[240px] h-auto object-contain mb-2 drop-shadow-2xl"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-              e.currentTarget.nextElementSibling?.classList.add('flex');
-            }}
-          />
-          <div className="hidden flex-col items-center w-full">
-            <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-orange-500/20">
-              <Flame size={40} className="text-white" />
+          {!imageError ? (
+            <img 
+              src="/image.png" 
+              alt="Chell Burger Logo" 
+              className="w-full max-w-[240px] h-auto object-contain mb-2 drop-shadow-2xl"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="flex flex-col items-center w-full">
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-orange-500/20">
+                <Flame size={40} className="text-white" />
+              </div>
+              <h1 className="text-3xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-center">
+                Chell Burger
+              </h1>
+              <p className="text-yellow-500 font-medium italic mt-1">"Sabor que não engana"</p>
             </div>
-            <h1 className="text-3xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-center">
-              Chell Burger
-            </h1>
-            <p className="text-yellow-500 font-medium italic mt-1">"Sabor que não engana"</p>
-          </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">

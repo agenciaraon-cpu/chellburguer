@@ -12,6 +12,8 @@ interface Props {
 }
 
 export function MenuScreen({ user, cart, onAddToCart, onViewCart }: Props) {
+  const [imageError, setImageError] = React.useState(false);
+
   const burgers = menuItems.filter(item => item.category === 'burger');
   const drinks = menuItems.filter(item => item.category === 'drink');
   
@@ -23,22 +25,21 @@ export function MenuScreen({ user, cart, onAddToCart, onViewCart }: Props) {
       <header className="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <img 
-              src="/image.png" 
-              alt="Chell Burger" 
-              className="h-8 w-auto object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                e.currentTarget.nextElementSibling?.classList.add('flex');
-              }}
-            />
-            <div className="hidden items-center space-x-2">
-              <Flame className="text-orange-500" size={24} />
-              <h1 className="text-xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-red-600">
-                Chell Burger
-              </h1>
-            </div>
+            {!imageError ? (
+              <img 
+                src="/image.png" 
+                alt="Chell Burger" 
+                className="h-8 w-auto object-contain"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Flame className="text-orange-500" size={24} />
+                <h1 className="text-xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-red-600">
+                  Chell Burger
+                </h1>
+              </div>
+            )}
           </div>
           <div className="text-sm font-medium text-neutral-300 bg-neutral-800/50 px-3 py-1.5 rounded-full border border-neutral-700/50">
             Seja bem vindo, <span className="text-orange-400 font-bold">{user.name}</span>!
