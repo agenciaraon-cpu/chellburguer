@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MenuItem, CartItem } from '../types';
-import { Plus, Minus, MessageSquare, X } from 'lucide-react';
+import { Plus, MessageSquare, X } from 'lucide-react';
 
 interface Props {
   item: MenuItem;
@@ -104,17 +104,17 @@ export function MenuItemCard({ item, onAdd }: Props) {
                 <span className="text-sm font-bold text-neutral-400">Quantidade</span>
                 <div className="flex items-center space-x-3 bg-neutral-950 border border-neutral-800 rounded-xl p-1">
                   <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95"
+                    onClick={(e) => { e.stopPropagation(); setQuantity(Math.max(1, quantity - 1)); }}
+                    className="w-10 h-10 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95 text-lg font-bold"
                   >
-                    <Minus size={18} />
+                    -
                   </button>
                   <span className="font-bold text-neutral-100 w-6 text-center">{quantity}</span>
                   <button 
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95"
+                    onClick={(e) => { e.stopPropagation(); setQuantity(quantity + 1); }}
+                    className="w-10 h-10 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95 text-lg font-bold"
                   >
-                    <Plus size={18} />
+                    +
                   </button>
                 </div>
               </div>
