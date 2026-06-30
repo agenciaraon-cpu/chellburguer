@@ -1,16 +1,17 @@
 import React from 'react';
 import { menuItems } from '../data';
 import { MenuItemCard } from './MenuItemCard';
-import { CartItem } from '../types';
+import { CartItem, User } from '../types';
 import { ShoppingBag, Flame } from 'lucide-react';
 
 interface Props {
+  user: User;
   cart: CartItem[];
   onAddToCart: (item: CartItem) => void;
   onViewCart: () => void;
 }
 
-export function MenuScreen({ cart, onAddToCart, onViewCart }: Props) {
+export function MenuScreen({ user, cart, onAddToCart, onViewCart }: Props) {
   const burgers = menuItems.filter(item => item.category === 'burger');
   const drinks = menuItems.filter(item => item.category === 'drink');
   
@@ -38,6 +39,9 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: Props) {
                 Chell Burger
               </h1>
             </div>
+          </div>
+          <div className="text-sm font-medium text-neutral-300 bg-neutral-800/50 px-3 py-1.5 rounded-full border border-neutral-700/50">
+            Seja bem vindo, <span className="text-orange-400 font-bold">{user.name}</span>!
           </div>
         </div>
       </header>

@@ -60,8 +60,9 @@ export default function App() {
       <div className="w-full h-[100dvh] sm:h-[850px] sm:max-w-[400px] bg-neutral-950 sm:rounded-[3rem] sm:border-[8px] border-neutral-800 overflow-hidden relative shadow-2xl">
         {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} />}
         
-        {currentScreen === 'menu' && (
+        {currentScreen === 'menu' && user && (
           <MenuScreen 
+            user={user}
             cart={cart} 
             onAddToCart={handleAddToCart} 
             onViewCart={() => setCurrentScreen('cart')} 

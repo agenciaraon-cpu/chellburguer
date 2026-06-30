@@ -20,12 +20,11 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     number: '',
     reference: ''
   });
-  const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
   const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'pix' | 'card'>('whatsapp');
   const [copiedPix, setCopiedPix] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
-  const deliveryFee = deliveryMode === 'delivery' ? 10.00 : 0;
+  const deliveryFee = 10.00;
   const total = subtotal + deliveryFee;
 
   const handleCopyPix = () => {
@@ -35,7 +34,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   };
 
   const handleCheckout = () => {
-    if (deliveryMode === 'delivery' && (!address.street || !address.neighborhood || !address.city || !address.number)) {
+    if (!address.street || !address.neighborhood || !address.city || !address.number) {
       alert('Por favor, preencha o endereço de entrega corretamente.');
       return;
     }
@@ -53,21 +52,15 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     });
     
     orderText += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
-    if (deliveryMode === 'delivery') {
-      orderText += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
-    }
+    orderText += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
     orderText += `*TOTAL:* R$ ${total.toFixed(2)}\n\n`;
     
-    if (deliveryMode === 'delivery') {
-      orderText += `*ENDEREÇO DE ENTREGA:*\n`;
-      orderText += `${address.street}, Nº ${address.number}\n`;
-      orderText += `Bairro: ${address.neighborhood}\n`;
-      orderText += `Cidade: ${address.city}\n`;
-      if (address.reference) {
-        orderText += `Ref: ${address.reference}\n`;
-      }
-    } else {
-      orderText += `*RETIRAR NO ESTABELECIMENTO*\n`;
+    orderText += `*ENDEREÇO DE ENTREGA:*\n`;
+    orderText += `${address.street}, Nº ${address.number}\n`;
+    orderText += `Bairro: ${address.neighborhood}\n`;
+    orderText += `Cidade: ${address.city}\n`;
+    if (address.reference) {
+      orderText += `Ref: ${address.reference}\n`;
     }
 
     orderText += `\n*PAGAMENTO:* ${paymentMethod === 'pix' ? 'Pix pelo App (Comprovante a seguir)' : paymentMethod === 'card' ? 'Pagar na entrega com cartão' : 'A combinar no WhatsApp'}`;
@@ -149,12 +142,10 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
               <span>Subtotal</span>
               <span>R$ {subtotal.toFixed(2)}</span>
             </div>
-            {deliveryMode === 'delivery' && (
-              <div className="flex justify-between items-center text-neutral-400">
-                <span>Taxa de Entrega</span>
-                <span>R$ {deliveryFee.toFixed(2)}</span>
-              </div>
-            )}
+            <div className="flex justify-between items-center text-neutral-400">
+              <span>Taxa de Entrega</span>
+              <span>R$ {deliveryFee.toFixed(2)}</span>
+            </div>
             <div className="flex justify-between items-center pt-2 border-t border-neutral-800/50">
               <span className="text-neutral-300 font-bold">Total do Pedido</span>
               <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
@@ -164,52 +155,30 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
           </div>
         </section>
 
-        {/* Delivery Options */}
+        {/* Address Form */}
         <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-5 space-y-4">
           <h2 className="text-lg font-bold flex items-center text-neutral-100">
-            <MapPin size={20} className="text-orange-500 mr-2" />
-            Opções de Entrega
+            <MapPin size={20} className="text-neutral-500 mr-2" />
+            Endereço de Entrega
           </h2>
-          <div className="flex gap-4">
-            <label className={`flex-1 flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${deliveryMode === 'delivery' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
-              <input type="radio" name="deliveryMode" checked={deliveryMode === 'delivery'} onChange={() => setDeliveryMode('delivery')} className="hidden" />
-              <span className="font-bold mb-1">Entrega</span>
-              <span className="text-xs text-orange-400">Taxa: R$ 10,00</span>
-            </label>
-            <label className={`flex-1 flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${deliveryMode === 'pickup' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
-              <input type="radio" name="deliveryMode" checked={deliveryMode === 'pickup'} onChange={() => setDeliveryMode('pickup')} className="hidden" />
-              <span className="font-bold mb-1">Retirar no local</span>
-              <span className="text-xs text-green-400">Grátis</span>
-            </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+            </div>
+            <div>
+              <input type="text" placeholder="Número" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+            </div>
+            <div>
+              <input type="text" placeholder="Bairro" value={address.neighborhood} onChange={e => setAddress({...address, neighborhood: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+            </div>
+            <div className="md:col-span-2">
+              <input type="text" placeholder="Cidade" value={address.city} onChange={e => setAddress({...address, city: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+            </div>
+            <div className="md:col-span-2">
+              <input type="text" placeholder="Ponto de Referência (Opcional)" value={address.reference} onChange={e => setAddress({...address, reference: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+            </div>
           </div>
         </section>
-
-        {/* Address Form (Only if Delivery) */}
-        {deliveryMode === 'delivery' && (
-          <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-5 space-y-4">
-            <h2 className="text-lg font-bold flex items-center text-neutral-100">
-              <MapPin size={20} className="text-neutral-500 mr-2" />
-              Endereço de Entrega
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-              </div>
-              <div>
-                <input type="text" placeholder="Número" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-              </div>
-              <div>
-                <input type="text" placeholder="Bairro" value={address.neighborhood} onChange={e => setAddress({...address, neighborhood: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-              </div>
-              <div className="md:col-span-2">
-                <input type="text" placeholder="Cidade" value={address.city} onChange={e => setAddress({...address, city: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-              </div>
-              <div className="md:col-span-2">
-                <input type="text" placeholder="Ponto de Referência (Opcional)" value={address.reference} onChange={e => setAddress({...address, reference: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* Payment */}
         <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-5 space-y-4">
