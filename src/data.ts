@@ -21,7 +21,7 @@ export const menuItems: MenuItem[] = [
     id: 'b3',
     name: 'FOGO NA LIGA',
     description: 'Pão brioche, Blend 150g, queijo cheddar, bacon, alface, tomate e maionese verde.',
-    price: 25.00,
+    price: 27.00,
     category: 'burger',
     image: '/fogonaliga.png'
   },
@@ -29,7 +29,7 @@ export const menuItems: MenuItem[] = [
     id: 'b4',
     name: 'DOCE TENTAÇÃO',
     description: 'Pão brioche, Blend 150g, queijo cheddar, cebola caramelizada, alface, tomate e maionese verde.',
-    price: 25.00,
+    price: 27.00,
     category: 'burger',
     image: '/docetentacao.png'
   },
