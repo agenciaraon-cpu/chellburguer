@@ -23,7 +23,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'pix' | 'card'>('whatsapp');
   const [copiedPix, setCopiedPix] = useState(false);
 
-  const subtotal = cart.reduce((sum, item) => sum + (item.menuItem.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + ((item?.menuItem?.price || 0) * (item?.quantity || 1)), 0);
   const deliveryFee = 10.00;
   const total = subtotal + deliveryFee;
 
@@ -45,8 +45,11 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     
     orderText += `*ITENS DO PEDIDO:*\n`;
     cart.forEach(item => {
-      orderText += `${item.quantity}x ${item.menuItem.name} - R$ ${(item.menuItem.price * item.quantity).toFixed(2)}\n`;
-      if (item.observation) {
+      const price = item?.menuItem?.price || 0;
+      const quantity = item?.quantity || 1;
+      const name = item?.menuItem?.name || 'Item';
+      orderText += `${quantity}x ${name} - R$ ${(price * quantity).toFixed(2)}\n`;
+      if (item?.observation) {
         orderText += `   ↳ _Obs: ${item.observation}_\n`;
       }
     });
@@ -99,13 +102,17 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-8">
         {/* Items List */}
         <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-1">
-          {cart.map((item, index) => (
+          {cart.map((item, index) => {
+            const price = item?.menuItem?.price || 0;
+            const quantity = item?.quantity || 1;
+            const name = item?.menuItem?.name || 'Item';
+            return (
             <div key={item.id} className={`p-4 ${index !== cart.length - 1 ? 'border-b border-neutral-800' : ''}`}>
               <div className="flex justify-between">
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg">{item.menuItem.name}</h3>
-                  <p className="text-orange-400 font-medium">R$ {item.menuItem.price.toFixed(2)}</p>
-                  {item.observation && (
+                  <h3 className="font-bold text-lg">{name}</h3>
+                  <p className="text-orange-400 font-medium">R$ {price.toFixed(2)}</p>
+                  {item?.observation && (
                     <p className="text-sm text-neutral-400 mt-1 italic">
                       Obs: {item.observation}
                     </p>
@@ -125,7 +132,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
                     >
                       -
                     </button>
-                    <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
+                    <span className="w-8 text-center font-medium text-sm">{quantity}</span>
                     <button 
                       onClick={() => onUpdateQuantity(item.id, 1)}
                       className="w-8 h-8 flex items-center justify-center text-orange-500 hover:bg-neutral-800 rounded-r-lg transition-colors"
@@ -136,7 +143,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
                 </div>
               </div>
             </div>
-          ))}
+          )})}
           <div className="p-4 bg-neutral-950/50 border-t border-neutral-800 rounded-b-2xl space-y-2">
             <div className="flex justify-between items-center text-neutral-400">
               <span>Subtotal</span>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MenuItem, CartItem } from '../types';
-import { Plus, MessageSquare, X } from 'lucide-react';
+import { Plus, Minus, MessageSquare, X } from 'lucide-react';
 
 interface Props {
   item: MenuItem;
@@ -10,6 +10,7 @@ interface Props {
 export function MenuItemCard({ item, onAdd }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [observation, setObservation] = useState('');
+  const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAdd = () => {
@@ -17,12 +18,13 @@ export function MenuItemCard({ item, onAdd }: Props) {
     setTimeout(() => {
       setIsAdding(false);
       setIsOpen(false);
+      setQuantity(1); // Reset quantity after adding
     }, 400);
     
     onAdd({
       id: Math.random().toString(36).substring(2, 9),
       menuItem: item,
-      quantity: 1,
+      quantity: quantity,
       observation: observation.trim() ? observation : undefined
     });
     setObservation('');
@@ -97,6 +99,25 @@ export function MenuItemCard({ item, onAdd }: Props) {
                   />
                 </div>
               )}
+
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-sm font-bold text-neutral-400">Quantidade</span>
+                <div className="flex items-center space-x-3 bg-neutral-950 border border-neutral-800 rounded-xl p-1">
+                  <button 
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-10 h-10 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95"
+                  >
+                    <Minus size={18} />
+                  </button>
+                  <span className="font-bold text-neutral-100 w-6 text-center">{quantity}</span>
+                  <button 
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-10 h-10 rounded-lg bg-neutral-900 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95"
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+              </div>
 
               <button
                 onClick={handleAdd}

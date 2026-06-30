@@ -22,14 +22,15 @@ export default function App() {
   };
 
   const handleAddToCart = (item: CartItem) => {
+    if (!item || !item.menuItem) return;
     setCart(prev => {
       // If same item and observation, increase quantity
       const existing = prev.find(
-        i => i.menuItem.id === item.menuItem.id && i.observation === item.observation
+        i => i?.menuItem?.id === item.menuItem.id && i?.observation === item.observation
       );
       if (existing) {
         return prev.map(i => 
-          i.id === existing.id ? { ...i, quantity: i.quantity + item.quantity } : i
+          i.id === existing.id ? { ...i, quantity: (i.quantity || 1) + (item.quantity || 1) } : i
         );
       }
       return [...prev, item];

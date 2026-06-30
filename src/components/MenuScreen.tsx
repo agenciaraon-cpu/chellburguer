@@ -17,7 +17,7 @@ export function MenuScreen({ user, cart, onAddToCart, onViewCart }: Props) {
   const burgers = menuItems.filter(item => item.category === 'burger');
   const drinks = menuItems.filter(item => item.category === 'drink');
   
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = cart.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
   return (
     <div className="h-full overflow-y-auto bg-neutral-950 pb-24 relative">
