@@ -1,0 +1,6 @@
+{
+  "name": "Chell Burger Delivery",
+  "description": "Aplicativo de pedidos para a hamburgueria Chell Burger",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
