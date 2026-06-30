@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { MenuItem, CartItem } from '../types';
+import { MenuItem, CartItem, Addon } from '../types';
 import { Plus, MessageSquare, X } from 'lucide-react';
+import { AVAILABLE_ADDONS } from '../data';
 
 interface Props {
   item: MenuItem;
@@ -12,6 +13,21 @@ export function MenuItemCard({ item, onAdd }: Props) {
   const [observation, setObservation] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
+
+  const handleAddonToggle = (addon: Addon) => {
+    setSelectedAddons(prev => {
+      const isSelected = prev.find(a => a.id === addon.id);
+      if (isSelected) {
+        return prev.filter(a => a.id !== addon.id);
+      } else {
+        return [...prev, addon];
+      }
+    });
+  };
+
+  const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+  const finalPrice = (item.price + addonsTotal) * quantity;
 
   const handleAdd = () => {
     setIsAdding(true);
@@ -19,13 +35,15 @@ export function MenuItemCard({ item, onAdd }: Props) {
       setIsAdding(false);
       setIsOpen(false);
       setQuantity(1); // Reset quantity after adding
+      setSelectedAddons([]); // Reset addons
     }, 400);
     
     onAdd({
       id: Math.random().toString(36).substring(2, 9),
       menuItem: item,
       quantity: quantity,
-      observation: observation.trim() ? observation : undefined
+      observation: observation.trim() ? observation : undefined,
+      addons: selectedAddons.length > 0 ? selectedAddons : undefined
     });
     setObservation('');
   };
@@ -85,6 +103,31 @@ export function MenuItemCard({ item, onAdd }: Props) {
               </p>
 
               {item.category === 'burger' && (
+                <div className="mb-4">
+                  <label className="flex items-center text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                    <Plus size={14} className="mr-1.5" />
+                    Adicionais
+                  </label>
+                  <div className="space-y-2">
+                    {AVAILABLE_ADDONS.map(addon => (
+                      <label key={addon.id} className="flex items-center justify-between p-3 rounded-xl border border-neutral-800 bg-neutral-950/50 cursor-pointer hover:border-orange-500/50 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <input 
+                            type="checkbox" 
+                            className="w-4 h-4 rounded border-neutral-700 text-orange-500 focus:ring-orange-500 focus:ring-offset-neutral-950 bg-neutral-900"
+                            checked={selectedAddons.some(a => a.id === addon.id)}
+                            onChange={() => handleAddonToggle(addon)}
+                          />
+                          <span className="text-sm font-medium text-neutral-200">{addon.name}</span>
+                        </div>
+                        <span className="text-sm font-bold text-orange-400">+ R$ {addon.price.toFixed(2)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {item.category === 'burger' && (
                 <div className="mb-6 space-y-2">
                   <label className="flex items-center text-xs font-bold text-neutral-500 uppercase tracking-wider">
                     <MessageSquare size={14} className="mr-1.5" />
@@ -132,7 +175,7 @@ export function MenuItemCard({ item, onAdd }: Props) {
                 ) : (
                   <span className="flex items-center">
                     <Plus size={20} className="mr-2" />
-                    <span>Adicionar • R$ </span><span>{(item.price * quantity).toFixed(2)}</span>
+                    <span>Adicionar • R$ </span><span>{finalPrice.toFixed(2)}</span>
                   </span>
                 )}
               </button>

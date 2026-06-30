@@ -1,4 +1,11 @@
-import { MenuItem } from './types';
+import { MenuItem, Addon } from './types';
+
+export const AVAILABLE_ADDONS: Addon[] = [
+  { id: 'a1', name: 'Cebola caramelizada', price: 3.50 },
+  { id: 'a2', name: 'Bacon', price: 4.00 },
+  { id: 'a3', name: 'Calabresa', price: 3.50 },
+  { id: 'a4', name: 'Geleia de Pimenta', price: 2.50 },
+];
 
 export const menuItems: MenuItem[] = [
   {

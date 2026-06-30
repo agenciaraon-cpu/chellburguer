@@ -23,7 +23,12 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'pix' | 'card'>('whatsapp');
   const [copiedPix, setCopiedPix] = useState(false);
 
-  const subtotal = cart.reduce((sum, item) => sum + ((item?.menuItem?.price || 0) * (item?.quantity || 1)), 0);
+  const subtotal = cart.reduce((sum, item) => {
+    const itemPrice = item?.menuItem?.price || 0;
+    const quantity = item?.quantity || 1;
+    const addonsTotal = (item?.addons || []).reduce((addonSum, addon) => addonSum + addon.price, 0);
+    return sum + ((itemPrice + addonsTotal) * quantity);
+  }, 0);
   const deliveryFee = 10.00;
   const total = subtotal + deliveryFee;
 
@@ -48,7 +53,13 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
       const price = item?.menuItem?.price || 0;
       const quantity = item?.quantity || 1;
       const name = item?.menuItem?.name || 'Item';
-      orderText += `${quantity}x ${name} - R$ ${(price * quantity).toFixed(2)}\n`;
+      const addonsTotal = (item?.addons || []).reduce((sum, addon) => sum + addon.price, 0);
+      const totalItemPrice = (price + addonsTotal) * quantity;
+      
+      orderText += `${quantity}x ${name} - R$ ${totalItemPrice.toFixed(2)}\n`;
+      if (item?.addons && item.addons.length > 0) {
+        orderText += `   ↳ Adicionais: ${item.addons.map(a => a.name).join(', ')}\n`;
+      }
       if (item?.observation) {
         orderText += `   ↳ _Obs: ${item.observation}_\n`;
       }
@@ -111,7 +122,13 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
               <div className="flex justify-between">
                 <div className="flex-1">
                   <h3 className="font-bold text-lg">{name}</h3>
-                  <p className="text-orange-400 font-medium"><span>R$ </span><span>{price.toFixed(2)}</span></p>
+                  <p className="text-orange-400 font-medium"><span>R$ </span><span>{((price + (item?.addons || []).reduce((s, a) => s + a.price, 0)) * quantity).toFixed(2)}</span></p>
+                  {item?.addons && item.addons.length > 0 && (
+                    <p className="text-sm text-neutral-300 mt-1">
+                      <span className="font-medium text-neutral-500">Adicionais: </span>
+                      {item.addons.map(a => a.name).join(', ')}
+                    </p>
+                  )}
                   {item?.observation && (
                     <p className="text-sm text-neutral-400 mt-1 italic">
                       Obs: {item.observation}

@@ -24,9 +24,14 @@ export default function App() {
   const handleAddToCart = (item: CartItem) => {
     if (!item || !item.menuItem) return;
     setCart(prev => {
-      // If same item and observation, increase quantity
+      // If same item, observation, and addons, increase quantity
       const existing = prev.find(
-        i => i?.menuItem?.id === item.menuItem.id && i?.observation === item.observation
+        i => {
+          if (i?.menuItem?.id !== item.menuItem.id || i?.observation !== item.observation) return false;
+          const iAddons = (i.addons || []).map(a => a.id).sort().join(',');
+          const newAddons = (item.addons || []).map(a => a.id).sort().join(',');
+          return iAddons === newAddons;
+        }
       );
       if (existing) {
         return prev.map(i => 
