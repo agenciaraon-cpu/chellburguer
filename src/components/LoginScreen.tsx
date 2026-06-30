@@ -18,7 +18,7 @@ export function LoginScreen({ onLogin }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-6 text-neutral-100">
+    <div className="h-full overflow-y-auto bg-neutral-950 flex flex-col items-center justify-center p-6 text-neutral-100">
       <div className="w-full max-w-md bg-neutral-900 p-8 rounded-2xl shadow-2xl border border-neutral-800">
         <div className="flex flex-col items-center mb-8">
           <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-orange-500/20">

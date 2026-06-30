@@ -17,7 +17,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: Props) {
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-neutral-950 pb-24">
+    <div className="h-full overflow-y-auto bg-neutral-950 pb-24 relative">
       {/* Header */}
       <header className="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
@@ -60,7 +60,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: Props) {
 
       {/* Floating Cart Button */}
       {totalItems > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-neutral-950 via-neutral-950 to-transparent pointer-events-none">
+        <div className="sticky bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-neutral-950 via-neutral-950 to-transparent pointer-events-none">
           <button
             onClick={onViewCart}
             className="max-w-md mx-auto w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-orange-500/20 flex items-center justify-between px-6 pointer-events-auto active:scale-[0.98] transition-transform"

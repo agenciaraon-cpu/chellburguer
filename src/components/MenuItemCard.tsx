@@ -17,7 +17,7 @@ export function MenuItemCard({ item, onAdd }: Props) {
     setTimeout(() => setIsAdding(false), 300);
     
     onAdd({
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 9),
       menuItem: item,
       quantity: 1,
       observation: observation.trim() ? observation : undefined

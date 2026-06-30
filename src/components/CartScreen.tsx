@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CartItem, User, Address } from '../types';
 import { PIX_KEY, WHATSAPP_NUMBER } from '../data';
-import { ArrowLeft, Trash2, MapPin, CreditCard, Copy, CheckCircle2, Send } from 'lucide-react';
+import { ArrowLeft, Trash2, MapPin, CreditCard, Copy, CheckCircle2, Send, ShoppingBag } from 'lucide-react';
 
 interface Props {
   cart: CartItem[];
@@ -70,7 +70,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-6 text-center">
+      <div className="h-full overflow-y-auto bg-neutral-950 flex flex-col items-center justify-center p-6 text-center">
         <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mb-4 border border-neutral-800">
           <ShoppingBag size={32} className="text-neutral-500" />
         </div>
@@ -87,7 +87,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 pb-24">
+    <div className="h-full overflow-y-auto bg-neutral-950 text-neutral-100 pb-24 relative">
       <header className="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-10 px-4 py-4 flex items-center">
         <button onClick={onBack} className="p-2 -ml-2 text-neutral-400 hover:text-white mr-2">
           <ArrowLeft size={24} />
@@ -215,7 +215,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
         </section>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-neutral-950 border-t border-neutral-900">
+      <div className="sticky bottom-0 left-0 right-0 p-4 bg-neutral-950 border-t border-neutral-900">
         <button
           onClick={handleCheckout}
           className="max-w-2xl mx-auto w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center active:scale-[0.98] transition-transform"
@@ -227,5 +227,3 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     </div>
   );
 }
-// Add ShoppingBag import at top
-import { ShoppingBag } from 'lucide-react';

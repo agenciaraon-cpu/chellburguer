@@ -56,27 +56,29 @@ export default function App() {
   };
 
   return (
-    <>
-      {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} />}
-      
-      {currentScreen === 'menu' && (
-        <MenuScreen 
-          cart={cart} 
-          onAddToCart={handleAddToCart} 
-          onViewCart={() => setCurrentScreen('cart')} 
-        />
-      )}
-      
-      {currentScreen === 'cart' && user && (
-        <CartScreen 
-          cart={cart} 
-          user={user}
-          onUpdateQuantity={handleUpdateQuantity}
-          onRemoveItem={handleRemoveItem}
-          onBack={() => setCurrentScreen('menu')}
-          onClearCart={handleClearCart}
-        />
-      )}
-    </>
+    <div className="min-h-screen bg-black sm:py-8 flex justify-center items-center">
+      <div className="w-full h-[100dvh] sm:h-[850px] sm:max-w-[400px] bg-neutral-950 sm:rounded-[3rem] sm:border-[8px] border-neutral-800 overflow-hidden relative shadow-2xl">
+        {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} />}
+        
+        {currentScreen === 'menu' && (
+          <MenuScreen 
+            cart={cart} 
+            onAddToCart={handleAddToCart} 
+            onViewCart={() => setCurrentScreen('cart')} 
+          />
+        )}
+        
+        {currentScreen === 'cart' && user && (
+          <CartScreen 
+            cart={cart} 
+            user={user}
+            onUpdateQuantity={handleUpdateQuantity}
+            onRemoveItem={handleRemoveItem}
+            onBack={() => setCurrentScreen('menu')}
+            onClearCart={handleClearCart}
+          />
+        )}
+      </div>
+    </div>
   );
 }
