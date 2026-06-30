@@ -87,7 +87,7 @@ export function MenuScreen({ user, cart, onAddToCart, onViewCart }: Props) {
               <span>Ver Carrinho</span>
             </div>
             <div className="bg-white/20 px-3 py-1 rounded-full text-sm">
-              {totalItems} {totalItems === 1 ? 'item' : 'itens'}
+              <span>{totalItems}</span> <span>{totalItems === 1 ? 'item' : 'itens'}</span>
             </div>
           </button>
         </div>

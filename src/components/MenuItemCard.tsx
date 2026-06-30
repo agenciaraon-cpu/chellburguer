@@ -127,11 +127,13 @@ export function MenuItemCard({ item, onAdd }: Props) {
                     : 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg shadow-orange-500/20 active:scale-[0.98]'
                 }`}
               >
-                {isAdding ? 'Adicionado ao Carrinho!' : (
-                  <>
+                {isAdding ? (
+                  <span>Adicionado ao Carrinho!</span>
+                ) : (
+                  <span className="flex items-center">
                     <Plus size={20} className="mr-2" />
-                    Adicionar
-                  </>
+                    <span>Adicionar • R$ </span><span>{(item.price * quantity).toFixed(2)}</span>
+                  </span>
                 )}
               </button>
             </div>

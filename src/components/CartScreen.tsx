@@ -111,7 +111,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
               <div className="flex justify-between">
                 <div className="flex-1">
                   <h3 className="font-bold text-lg">{name}</h3>
-                  <p className="text-orange-400 font-medium">R$ {price.toFixed(2)}</p>
+                  <p className="text-orange-400 font-medium"><span>R$ </span><span>{price.toFixed(2)}</span></p>
                   {item?.observation && (
                     <p className="text-sm text-neutral-400 mt-1 italic">
                       Obs: {item.observation}
@@ -147,16 +147,16 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
           <div className="p-4 bg-neutral-950/50 border-t border-neutral-800 rounded-b-2xl space-y-2">
             <div className="flex justify-between items-center text-neutral-400">
               <span>Subtotal</span>
-              <span>R$ {subtotal.toFixed(2)}</span>
+              <span><span>R$ </span><span>{subtotal.toFixed(2)}</span></span>
             </div>
             <div className="flex justify-between items-center text-neutral-400">
               <span>Taxa de Entrega</span>
-              <span>R$ {deliveryFee.toFixed(2)}</span>
+              <span><span>R$ </span><span>{deliveryFee.toFixed(2)}</span></span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-neutral-800/50">
               <span className="text-neutral-300 font-bold">Total do Pedido</span>
               <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                R$ {total.toFixed(2)}
+                <span>R$ </span><span>{total.toFixed(2)}</span>
               </span>
             </div>
           </div>
