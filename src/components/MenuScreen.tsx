@@ -22,10 +22,22 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: Props) {
       <header className="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <Flame className="text-orange-500" size={24} />
-            <h1 className="text-xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-red-600">
-              Chell Burger
-            </h1>
+            <img 
+              src="/image.png" 
+              alt="Chell Burger" 
+              className="h-8 w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                e.currentTarget.nextElementSibling?.classList.add('flex');
+              }}
+            />
+            <div className="hidden items-center space-x-2">
+              <Flame className="text-orange-500" size={24} />
+              <h1 className="text-xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-red-600">
+                Chell Burger
+              </h1>
+            </div>
           </div>
         </div>
       </header>
@@ -37,7 +49,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: Props) {
             <span className="bg-orange-500 w-1.5 h-6 mr-3 rounded-full"></span>
             Hambúrgueres
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {burgers.map(item => (
               <MenuItemCard key={item.id} item={item} onAdd={onAddToCart} />
             ))}
@@ -50,7 +62,7 @@ export function MenuScreen({ cart, onAddToCart, onViewCart }: Props) {
             <span className="bg-yellow-500 w-1.5 h-6 mr-3 rounded-full"></span>
             Bebidas
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {drinks.map(item => (
               <MenuItemCard key={item.id} item={item} onAdd={onAddToCart} />
             ))}
