@@ -63,28 +63,36 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-black sm:py-8 flex justify-center items-center">
-      <div className="w-full h-[100dvh] sm:h-[850px] sm:max-w-[400px] bg-neutral-950 sm:rounded-[3rem] sm:border-[8px] border-neutral-800 overflow-hidden relative shadow-2xl">
-        {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} />}
+      <div className="w-full h-[100dvh] sm:h-[850px] sm:max-w-[400px] bg-neutral-950 sm:rounded-[3rem] sm:border-[8px] border-neutral-800 overflow-hidden relative shadow-2xl flex flex-col">
+        <div className="flex-1 overflow-hidden relative">
+          {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} />}
+          
+          {currentScreen === 'menu' && user && (
+            <MenuScreen 
+              user={user}
+              cart={cart} 
+              onAddToCart={handleAddToCart} 
+              onViewCart={() => setCurrentScreen('cart')} 
+            />
+          )}
+          
+          {currentScreen === 'cart' && user && (
+            <CartScreen 
+              cart={cart} 
+              user={user}
+              onUpdateQuantity={handleUpdateQuantity}
+              onRemoveItem={handleRemoveItem}
+              onBack={() => setCurrentScreen('menu')}
+              onClearCart={handleClearCart}
+            />
+          )}
+        </div>
         
-        {currentScreen === 'menu' && user && (
-          <MenuScreen 
-            user={user}
-            cart={cart} 
-            onAddToCart={handleAddToCart} 
-            onViewCart={() => setCurrentScreen('cart')} 
-          />
-        )}
-        
-        {currentScreen === 'cart' && user && (
-          <CartScreen 
-            cart={cart} 
-            user={user}
-            onUpdateQuantity={handleUpdateQuantity}
-            onRemoveItem={handleRemoveItem}
-            onBack={() => setCurrentScreen('menu')}
-            onClearCart={handleClearCart}
-          />
-        )}
+        <div className="bg-neutral-900 border-t border-neutral-800 py-3 text-center shrink-0">
+          <p className="text-xs text-neutral-500 font-medium">
+            Desenvolvido pela <a href="https://www.instagram.com/somosraon" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-400 transition-colors">@somosraon</a>
+          </p>
+        </div>
       </div>
     </div>
   );

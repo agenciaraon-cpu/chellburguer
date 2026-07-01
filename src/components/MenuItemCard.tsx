@@ -70,13 +70,13 @@ export function MenuItemCard({ item, onAdd }: Props) {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-0 bg-black/80 backdrop-blur-sm">
           <div 
-            className="bg-neutral-900 w-full max-w-sm rounded-3xl border border-neutral-800 overflow-hidden shadow-2xl animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200"
+            className="bg-neutral-900 w-full max-w-sm rounded-3xl border border-neutral-800 overflow-hidden shadow-2xl animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
           >
-            <div className="relative h-56 w-full bg-neutral-800">
+            <div className="relative h-56 sm:h-64 w-full bg-neutral-800 shrink-0">
               <img 
                 src={item.image} 
                 alt={item.name} 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-2"
               />
               <button 
                 onClick={() => setIsOpen(false)}
@@ -91,7 +91,7 @@ export function MenuItemCard({ item, onAdd }: Props) {
               )}
             </div>
             
-            <div className="p-5 flex flex-col">
+            <div className="p-5 flex flex-col overflow-y-auto">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-xl font-black text-neutral-100">{item.name}</h3>
                 <span className="text-orange-500 font-bold text-lg whitespace-nowrap ml-4">
