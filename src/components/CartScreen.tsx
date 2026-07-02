@@ -24,6 +24,22 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'pix' | 'card'>('whatsapp');
   const [cardType, setCardType] = useState<'débito' | 'crédito' | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState(10.00);
+
+  // Haversine formula to calculate distance between two coordinates in km
+  const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);  
+    const dLon = (lon2 - lon1) * (Math.PI / 180); 
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+      Math.sin(dLon / 2) * Math.sin(dLon / 2)
+      ; 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
+    const d = R * c; 
+    return d;
+  };
 
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     let cep = e.target.value.replace(/\D/g, '');
@@ -41,12 +57,45 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
         const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
         const data = await res.json();
         if (!data.erro) {
+          const newAddress = {
+            street: data.logradouro || '',
+            neighborhood: data.bairro || '',
+            city: data.localidade || '',
+          };
+          
           setAddress(prev => ({
             ...prev,
-            street: data.logradouro || prev.street,
-            neighborhood: data.bairro || prev.neighborhood,
-            city: data.localidade || prev.city,
+            ...newAddress,
           }));
+
+          // Calculate delivery fee
+          try {
+            const query = `${newAddress.street}, ${newAddress.city}, BA`;
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+            const geoData = await geoRes.json();
+            
+            if (geoData && geoData.length > 0) {
+              const customerLat = parseFloat(geoData[0].lat);
+              const customerLon = parseFloat(geoData[0].lon);
+              
+              // Restaurant coordinates (Alagoinhas Velha, Alagoinhas)
+              const restaurantLat = -12.1332908;
+              const restaurantLon = -38.4062660;
+
+              const distance = getDistanceFromLatLonInKm(restaurantLat, restaurantLon, customerLat, customerLon);
+              
+              if (distance > 3) {
+                setDeliveryFee(12.00);
+              } else {
+                setDeliveryFee(10.00);
+              }
+            } else {
+              setDeliveryFee(10.00); // Default if coordinate not found
+            }
+          } catch (geoErr) {
+            console.error('Erro ao buscar coordenadas:', geoErr);
+            setDeliveryFee(10.00);
+          }
         }
       } catch (err) {
         console.error('Erro ao buscar CEP:', err);
@@ -60,7 +109,6 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     const addonsTotal = (item?.addons || []).reduce((addonSum, addon) => addonSum + addon.price, 0);
     return sum + ((itemPrice + addonsTotal) * quantity);
   }, 0);
-  const deliveryFee = 10.00;
   const total = subtotal + deliveryFee;
 
   const handleCopyPix = () => {
@@ -70,8 +118,8 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   };
 
   const handleCheckout = () => {
-    if (!address.street || !address.neighborhood || !address.city || !address.number) {
-      alert('Por favor, preencha o endereço de entrega corretamente.');
+    if (!address.cep || !address.street || !address.neighborhood || !address.city || !address.number) {
+      alert('Por favor, preencha o CEP e o endereço de entrega corretamente para calcular a entrega.');
       return;
     }
 
