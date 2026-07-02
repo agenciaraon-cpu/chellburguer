@@ -41,6 +41,43 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     return d;
   };
 
+  const calculateDeliveryFee = async (street: string, neighborhood: string, city: string) => {
+    if (!city) return;
+    try {
+      let query = `${street}, ${city}, BA`;
+      if (!street && neighborhood) {
+        query = `${neighborhood}, ${city}, BA`;
+      } else if (!street && !neighborhood) {
+        query = `${city}, BA`;
+      }
+      
+      const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&email=agenciaraon@gmail.com`);
+      const geoData = await geoRes.json();
+      
+      if (geoData && geoData.length > 0) {
+        const customerLat = parseFloat(geoData[0].lat);
+        const customerLon = parseFloat(geoData[0].lon);
+        
+        // Restaurant coordinates (Alagoinhas Velha, Alagoinhas)
+        const restaurantLat = -12.1332908;
+        const restaurantLon = -38.4062660;
+
+        const distance = getDistanceFromLatLonInKm(restaurantLat, restaurantLon, customerLat, customerLon);
+        
+        if (distance > 3) {
+          setDeliveryFee(12.00);
+        } else {
+          setDeliveryFee(10.00);
+        }
+      } else {
+        setDeliveryFee(10.00); // Default if coordinate not found
+      }
+    } catch (geoErr) {
+      console.error('Erro ao buscar coordenadas:', geoErr);
+      setDeliveryFee(10.00);
+    }
+  };
+
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     let cep = e.target.value.replace(/\D/g, '');
     if (cep.length > 8) cep = cep.slice(0, 8);
@@ -54,48 +91,45 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
 
     if (cep.length === 8) {
       try {
-        const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-        const data = await res.json();
-        if (!data.erro) {
-          const newAddress = {
-            street: data.logradouro || '',
-            neighborhood: data.bairro || '',
-            city: data.localidade || '',
-          };
-          
+        let newAddress = null;
+        
+        // Tentativa 1: BrasilAPI
+        try {
+          const res = await fetch(`https://brasilapi.com.br/api/cep/v1/${cep}`);
+          if (res.ok) {
+            const data = await res.json();
+            newAddress = {
+              street: data.street || '',
+              neighborhood: data.neighborhood || '',
+              city: data.city || '',
+            };
+          }
+        } catch (e) {
+          console.error('BrasilAPI erro:', e);
+        }
+
+        // Tentativa 2: ViaCEP (Fallback)
+        if (!newAddress) {
+          const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+          if (res.ok) {
+            const data = await res.json();
+            if (!data.erro) {
+              newAddress = {
+                street: data.logradouro || '',
+                neighborhood: data.bairro || '',
+                city: data.localidade || '',
+              };
+            }
+          }
+        }
+
+        if (newAddress) {
           setAddress(prev => ({
             ...prev,
             ...newAddress,
           }));
 
-          // Calculate delivery fee
-          try {
-            const query = `${newAddress.street}, ${newAddress.city}, BA`;
-            const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-            const geoData = await geoRes.json();
-            
-            if (geoData && geoData.length > 0) {
-              const customerLat = parseFloat(geoData[0].lat);
-              const customerLon = parseFloat(geoData[0].lon);
-              
-              // Restaurant coordinates (Alagoinhas Velha, Alagoinhas)
-              const restaurantLat = -12.1332908;
-              const restaurantLon = -38.4062660;
-
-              const distance = getDistanceFromLatLonInKm(restaurantLat, restaurantLon, customerLat, customerLon);
-              
-              if (distance > 3) {
-                setDeliveryFee(12.00);
-              } else {
-                setDeliveryFee(10.00);
-              }
-            } else {
-              setDeliveryFee(10.00); // Default if coordinate not found
-            }
-          } catch (geoErr) {
-            console.error('Erro ao buscar coordenadas:', geoErr);
-            setDeliveryFee(10.00);
-          }
+          await calculateDeliveryFee(newAddress.street, newAddress.neighborhood, newAddress.city);
         }
       } catch (err) {
         console.error('Erro ao buscar CEP:', err);
@@ -274,13 +308,13 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
               <input type="text" placeholder="CEP" value={address.cep} onChange={handleCepChange} maxLength={9} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
             </div>
             <div className="md:col-span-2">
-              <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} onBlur={() => calculateDeliveryFee(address.street, address.neighborhood, address.city)} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
             </div>
             <div>
               <input type="text" placeholder="Número" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
             </div>
             <div>
-              <input type="text" placeholder="Bairro" value={address.neighborhood} onChange={e => setAddress({...address, neighborhood: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              <input type="text" placeholder="Bairro" value={address.neighborhood} onChange={e => setAddress({...address, neighborhood: e.target.value})} onBlur={() => calculateDeliveryFee(address.street, address.neighborhood, address.city)} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
             </div>
             <div className="md:col-span-2">
               <input type="text" placeholder="Cidade" value={address.city} onChange={e => setAddress({...address, city: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
