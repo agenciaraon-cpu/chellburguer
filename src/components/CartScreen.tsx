@@ -25,6 +25,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   const [cardType, setCardType] = useState<'débito' | 'crédito' | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState(10.00);
+  const [isCalculatingFee, setIsCalculatingFee] = useState(false);
 
   // Haversine formula to calculate distance between two coordinates in km
   const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -43,28 +44,32 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
 
   const calculateDeliveryFee = async (street: string, neighborhood: string, city: string) => {
     if (!city) return;
+    setIsCalculatingFee(true);
     try {
       let geoData: any[] = [];
+      const headers = {
+        'Accept-Language': 'pt-BR,pt;q=0.9',
+      };
       
       // 1. Tenta com Rua + Cidade
       if (street) {
         const query1 = `${street}, ${city}, BA`;
-        const res1 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query1)}`);
-        geoData = await res1.json();
+        const res1 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query1)}&email=agenciaraon@gmail.com`, { headers });
+        if (res1.ok) geoData = await res1.json();
       }
 
       // 2. Se não encontrar, tenta com Bairro + Cidade
       if ((!geoData || geoData.length === 0) && neighborhood) {
         const query2 = `${neighborhood}, ${city}, BA`;
-        const res2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query2)}`);
-        geoData = await res2.json();
+        const res2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query2)}&email=agenciaraon@gmail.com`, { headers });
+        if (res2.ok) geoData = await res2.json();
       }
 
       // 3. Se não encontrar, tenta apenas Cidade
       if (!geoData || geoData.length === 0) {
         const query3 = `${city}, BA`;
-        const res3 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query3)}`);
-        geoData = await res3.json();
+        const res3 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query3)}&email=agenciaraon@gmail.com`, { headers });
+        if (res3.ok) geoData = await res3.json();
       }
       
       if (geoData && geoData.length > 0) {
@@ -90,6 +95,8 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     } catch (geoErr) {
       console.error('Erro ao buscar coordenadas:', geoErr);
       setDeliveryFee(10.00);
+    } finally {
+      setIsCalculatingFee(false);
     }
   };
 
@@ -301,7 +308,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
             </div>
             <div className="flex justify-between items-center text-neutral-400">
               <span>Taxa de Entrega</span>
-              <span><span>R$ </span><span>{deliveryFee.toFixed(2)}</span></span>
+              <span>{isCalculatingFee ? <span className="text-xs text-orange-500 animate-pulse">Calculando...</span> : <span>R$ {deliveryFee.toFixed(2)}</span>}</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-neutral-800/50">
               <span className="text-neutral-300 font-bold">Total do Pedido</span>
