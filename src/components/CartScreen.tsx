@@ -44,15 +44,28 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   const calculateDeliveryFee = async (street: string, neighborhood: string, city: string) => {
     if (!city) return;
     try {
-      let query = `${street}, ${city}, BA`;
-      if (!street && neighborhood) {
-        query = `${neighborhood}, ${city}, BA`;
-      } else if (!street && !neighborhood) {
-        query = `${city}, BA`;
-      }
+      let geoData: any[] = [];
       
-      const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&email=agenciaraon@gmail.com`);
-      const geoData = await geoRes.json();
+      // 1. Tenta com Rua + Cidade
+      if (street) {
+        const query1 = `${street}, ${city}, BA`;
+        const res1 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query1)}`);
+        geoData = await res1.json();
+      }
+
+      // 2. Se não encontrar, tenta com Bairro + Cidade
+      if ((!geoData || geoData.length === 0) && neighborhood) {
+        const query2 = `${neighborhood}, ${city}, BA`;
+        const res2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query2)}`);
+        geoData = await res2.json();
+      }
+
+      // 3. Se não encontrar, tenta apenas Cidade
+      if (!geoData || geoData.length === 0) {
+        const query3 = `${city}, BA`;
+        const res3 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query3)}`);
+        geoData = await res3.json();
+      }
       
       if (geoData && geoData.length > 0) {
         const customerLat = parseFloat(geoData[0].lat);
@@ -64,7 +77,9 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
 
         const distance = getDistanceFromLatLonInKm(restaurantLat, restaurantLon, customerLat, customerLon);
         
-        if (distance > 3) {
+        if (distance <= 1) {
+          setDeliveryFee(7.00);
+        } else if (distance > 3) {
           setDeliveryFee(12.00);
         } else {
           setDeliveryFee(10.00);
