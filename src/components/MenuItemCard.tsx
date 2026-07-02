@@ -79,8 +79,8 @@ export function MenuItemCard({ item, onAdd }: Props) {
                 className="w-full h-full object-contain p-2"
               />
               <button 
-                onClick={() => setIsOpen(false)}
-                className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full backdrop-blur-md hover:bg-black/70 transition-colors"
+                onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
+                className="absolute bottom-4 right-4 bg-black/50 text-white p-2 rounded-full backdrop-blur-md hover:bg-black/70 transition-colors"
               >
                 <X size={20} />
               </button>
@@ -178,6 +178,13 @@ export function MenuItemCard({ item, onAdd }: Props) {
                     <span>Adicionar • R$ </span><span>{finalPrice.toFixed(2)}</span>
                   </span>
                 )}
+              </button>
+
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
+                className="w-full mt-3 bg-neutral-800 text-neutral-300 font-bold py-3.5 rounded-xl shadow-sm flex items-center justify-center hover:bg-neutral-700 hover:text-white active:scale-[0.98] transition-colors"
+              >
+                Voltar
               </button>
             </div>
           </div>

@@ -14,6 +14,7 @@ interface Props {
 
 export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack, onClearCart }: Props) {
   const [address, setAddress] = useState<Address>({
+    cep: '',
     street: '',
     neighborhood: '',
     city: '',
@@ -21,7 +22,37 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     reference: ''
   });
   const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'pix' | 'card'>('whatsapp');
+  const [cardType, setCardType] = useState<'débito' | 'crédito' | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
+
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    let cep = e.target.value.replace(/\D/g, '');
+    if (cep.length > 8) cep = cep.slice(0, 8);
+    
+    let formattedCep = cep;
+    if (cep.length > 5) {
+      formattedCep = `${cep.slice(0, 5)}-${cep.slice(5)}`;
+    }
+    
+    setAddress(prev => ({ ...prev, cep: formattedCep }));
+
+    if (cep.length === 8) {
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await res.json();
+        if (!data.erro) {
+          setAddress(prev => ({
+            ...prev,
+            street: data.logradouro || prev.street,
+            neighborhood: data.bairro || prev.neighborhood,
+            city: data.localidade || prev.city,
+          }));
+        }
+      } catch (err) {
+        console.error('Erro ao buscar CEP:', err);
+      }
+    }
+  };
 
   const subtotal = cart.reduce((sum, item) => {
     const itemPrice = item?.menuItem?.price || 0;
@@ -41,6 +72,11 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   const handleCheckout = () => {
     if (!address.street || !address.neighborhood || !address.city || !address.number) {
       alert('Por favor, preencha o endereço de entrega corretamente.');
+      return;
+    }
+
+    if (paymentMethod === 'card' && !cardType) {
+      alert('Por favor, selecione se o cartão é débito ou crédito.');
       return;
     }
 
@@ -77,7 +113,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
       orderText += `Ref: ${address.reference}\n`;
     }
 
-    orderText += `\n*PAGAMENTO:* ${paymentMethod === 'pix' ? 'Pix pelo App (Comprovante a seguir)' : paymentMethod === 'card' ? 'Pagar na entrega com cartão' : 'A combinar no WhatsApp'}`;
+    orderText += `\n*PAGAMENTO:* ${paymentMethod === 'pix' ? 'Pix pelo App (Comprovante a seguir)' : paymentMethod === 'card' ? `Pagar na entrega com cartão (${cardType})` : 'A combinar no WhatsApp'}`;
 
     const encodedText = encodeURIComponent(orderText);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedText}`, '_blank');
@@ -187,6 +223,9 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
+              <input type="text" placeholder="CEP" value={address.cep} onChange={handleCepChange} maxLength={9} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+            </div>
+            <div className="md:col-span-2">
               <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
             </div>
             <div>
@@ -220,12 +259,35 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
               <span className="font-medium">Combinar no WhatsApp</span>
             </label>
 
-            <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
-              <input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="hidden" />
-              <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'card' ? 'border-orange-500' : 'border-neutral-600'}`}>
-                {paymentMethod === 'card' && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full" />}
+            <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
+              <div className="flex items-center">
+                <input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="hidden" />
+                <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'card' ? 'border-orange-500' : 'border-neutral-600'}`}>
+                  {paymentMethod === 'card' && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full" />}
+                </div>
+                <span className="font-medium">Pagar na entrega com cartão</span>
               </div>
-              <span className="font-medium">Pagar na entrega com cartão</span>
+              
+              {paymentMethod === 'card' && (
+                <div className="mt-4 ml-8 space-y-3 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex gap-4">
+                    <label className="flex items-center cursor-pointer">
+                      <input type="radio" name="cardType" checked={cardType === 'débito'} onChange={() => setCardType('débito')} className="hidden" />
+                      <div className={`w-4 h-4 rounded-full border-2 mr-2 flex items-center justify-center ${cardType === 'débito' ? 'border-orange-500' : 'border-neutral-600'}`}>
+                        {cardType === 'débito' && <div className="w-2 h-2 bg-orange-500 rounded-full" />}
+                      </div>
+                      <span className="text-sm text-neutral-300">Débito</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer">
+                      <input type="radio" name="cardType" checked={cardType === 'crédito'} onChange={() => setCardType('crédito')} className="hidden" />
+                      <div className={`w-4 h-4 rounded-full border-2 mr-2 flex items-center justify-center ${cardType === 'crédito' ? 'border-orange-500' : 'border-neutral-600'}`}>
+                        {cardType === 'crédito' && <div className="w-2 h-2 bg-orange-500 rounded-full" />}
+                      </div>
+                      <span className="text-sm text-neutral-300">Crédito</span>
+                    </label>
+                  </div>
+                </div>
+              )}
             </label>
 
             <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'pix' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
@@ -239,7 +301,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
               
               {paymentMethod === 'pix' && (
                 <div className="mt-4 ml-8 space-y-3 animate-in fade-in slide-in-from-top-2">
-                  <p className="text-sm text-neutral-400">1. Copie a chave Pix abaixo.<br/>2. Faça o pagamento no seu banco.<br/>3. Envie o comprovante no WhatsApp.</p>
+                  <p className="text-sm text-neutral-400">1. Copie a chave Pix abaixo.<br/>2. Faça o pagamento no seu banco.<br/>3. Assim que realizar o pagamento enviar o comprovante clicando em "Fazer pedido".</p>
                   <div className="flex items-center gap-2">
                     <code className="bg-neutral-950 px-3 py-2 rounded-lg text-xs flex-1 border border-neutral-800 text-neutral-300 overflow-hidden text-ellipsis">
                       {PIX_KEY}
@@ -264,7 +326,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
           className="max-w-2xl mx-auto w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center active:scale-[0.98] transition-transform"
         >
           <Send size={20} className="mr-2" />
-          {paymentMethod === 'pix' ? 'Enviar Pedido e Comprovante' : 'Finalizar Pedido no WhatsApp'}
+          Fazer pedido
         </button>
       </div>
     </div>
