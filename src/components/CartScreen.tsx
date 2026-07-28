@@ -25,8 +25,9 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   const [cardType, setCardType] = useState<'débito' | 'crédito' | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
   const [changeFor, setChangeFor] = useState('');
-  const [deliveryFee, setDeliveryFee] = useState(10.00);
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [isCalculatingFee, setIsCalculatingFee] = useState(false);
+  const [hasCalculatedFee, setHasCalculatedFee] = useState(false);
 
   // Haversine formula to calculate distance between two coordinates in km
   const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -97,6 +98,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
       console.error('Erro ao buscar coordenadas:', geoErr);
       setDeliveryFee(10.00);
     } finally {
+      setHasCalculatedFee(true);
       setIsCalculatingFee(false);
     }
   };
@@ -317,12 +319,12 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
             </div>
             <div className="flex justify-between items-center text-neutral-400">
               <span>Taxa de Entrega</span>
-              <span>{isCalculatingFee ? <span className="text-xs text-orange-500 animate-pulse">Calculando...</span> : <span>R$ {deliveryFee.toFixed(2)}</span>}</span>
+              <span>{isCalculatingFee ? <span className="text-xs text-orange-500 animate-pulse">Calculando...</span> : hasCalculatedFee ? <span>R$ {deliveryFee.toFixed(2)}</span> : <span>A calcular</span>}</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-neutral-800/50">
               <span className="text-neutral-300 font-bold">Total do Pedido</span>
               <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                <span>R$ </span><span>{total.toFixed(2)}</span>
+                <span>R$ </span><span>{hasCalculatedFee ? total.toFixed(2) : subtotal.toFixed(2)}</span>
               </span>
             </div>
           </div>
