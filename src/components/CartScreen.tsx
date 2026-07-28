@@ -83,12 +83,12 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
 
         const distance = getDistanceFromLatLonInKm(restaurantLat, restaurantLon, customerLat, customerLon);
         
-        if (distance <= 1) {
-          setDeliveryFee(7.00);
-        } else if (distance > 3) {
-          setDeliveryFee(12.00);
-        } else {
+        if (distance <= 2) {
+          setDeliveryFee(8.00);
+        } else if (distance <= 4) {
           setDeliveryFee(10.00);
+        } else {
+          setDeliveryFee(12.00);
         }
       } else {
         setDeliveryFee(10.00); // Default if coordinate not found
@@ -185,11 +185,11 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
       return;
     }
 
-    let orderText = `*NOVO PEDIDO - CHELL BURGER* 🔥\n\n`;
-    orderText += `*Cliente:* ${user.name}\n`;
-    orderText += `*Telefone:* ${user.phone}\n\n`;
+    let orderText = `NOVO PEDIDO - CHELL BURGER 🔥\n\n`;
+    orderText += `Cliente: ${user.name}\n`;
+    orderText += `Telefone: ${user.phone}\n\n`;
     
-    orderText += `*ITENS DO PEDIDO:*\n`;
+    orderText += `ITENS DO PEDIDO:\n`;
     cart.forEach(item => {
       const price = item?.menuItem?.price || 0;
       const quantity = item?.quantity || 1;
@@ -202,15 +202,15 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
         orderText += `   ↳ Adicionais: ${item.addons.map(a => a.name).join(', ')}\n`;
       }
       if (item?.observation) {
-        orderText += `   ↳ _Obs: ${item.observation}_\n`;
+        orderText += `   ↳ Obs: ${item.observation}\n`;
       }
     });
     
-    orderText += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}\n`;
-    orderText += `*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}\n`;
-    orderText += `*TOTAL:* R$ ${total.toFixed(2)}\n\n`;
+    orderText += `\nSubtotal: R$ ${subtotal.toFixed(2)}\n`;
+    orderText += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+    orderText += `TOTAL: R$ ${total.toFixed(2)}\n\n`;
     
-    orderText += `*ENDEREÇO DE ENTREGA:*\n`;
+    orderText += `ENDEREÇO DE ENTREGA:\n`;
     orderText += `${address.street}, Nº ${address.number}\n`;
     orderText += `Bairro: ${address.neighborhood}\n`;
     orderText += `Cidade: ${address.city}\n`;
@@ -226,7 +226,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     } else {
       paymentInfo = `Pagar em dinheiro${changeFor ? ` (Troco para R$ ${changeFor})` : ''}`;
     }
-    orderText += `\n*PAGAMENTO:* ${paymentInfo}`;
+    orderText += `\nPAGAMENTO: ${paymentInfo}`;
 
     const encodedText = encodeURIComponent(orderText);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedText}`, '_blank');

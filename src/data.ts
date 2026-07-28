@@ -5,7 +5,7 @@ export const AVAILABLE_ADDONS: Addon[] = [
   { id: 'a2', name: 'Bacon', price: 4.00 },
   { id: 'a3', name: 'Calabresa', price: 3.50 },
   { id: 'a4', name: 'Geleia de Pimenta', price: 2.50 },
-  { id: 'a5', name: 'Queijo Coalho', price: 4.00 },
+  { id: 'a5', name: 'Queijo Coalho', price: 6.00 },
 ];
 
 export const menuItems: MenuItem[] = [
