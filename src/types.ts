@@ -24,6 +24,7 @@ export interface CartItem {
 export interface User {
   name: string;
   phone: string;
+  isAdmin?: boolean;
 }
 
 export interface Address {

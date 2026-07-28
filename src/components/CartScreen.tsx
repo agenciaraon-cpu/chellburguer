@@ -21,9 +21,10 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     number: '',
     reference: ''
   });
-  const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'pix' | 'card'>('whatsapp');
+  const [paymentMethod, setPaymentMethod] = useState<'money' | 'pix' | 'card'>('money');
   const [cardType, setCardType] = useState<'débito' | 'crédito' | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
+  const [changeFor, setChangeFor] = useState('');
   const [deliveryFee, setDeliveryFee] = useState(10.00);
   const [isCalculatingFee, setIsCalculatingFee] = useState(false);
 
@@ -217,7 +218,15 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
       orderText += `Ref: ${address.reference}\n`;
     }
 
-    orderText += `\n*PAGAMENTO:* ${paymentMethod === 'pix' ? 'Pix pelo App (Comprovante a seguir)' : paymentMethod === 'card' ? `Pagar na entrega com cartão (${cardType})` : 'A combinar no WhatsApp'}`;
+    let paymentInfo = '';
+    if (paymentMethod === 'pix') {
+      paymentInfo = 'Pix pelo App (Comprovante a seguir)';
+    } else if (paymentMethod === 'card') {
+      paymentInfo = `Pagar na entrega com cartão (${cardType})`;
+    } else {
+      paymentInfo = `Pagar em dinheiro${changeFor ? ` (Troco para R$ ${changeFor})` : ''}`;
+    }
+    orderText += `\n*PAGAMENTO:* ${paymentInfo}`;
 
     const encodedText = encodeURIComponent(orderText);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedText}`, '_blank');
@@ -355,12 +364,32 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
           </h2>
           
           <div className="space-y-3">
-            <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'whatsapp' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
-              <input type="radio" name="payment" checked={paymentMethod === 'whatsapp'} onChange={() => setPaymentMethod('whatsapp')} className="hidden" />
-              <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'whatsapp' ? 'border-orange-500' : 'border-neutral-600'}`}>
-                {paymentMethod === 'whatsapp' && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full" />}
+            <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'money' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
+              <div className="flex items-center">
+                <input type="radio" name="payment" checked={paymentMethod === 'money'} onChange={() => setPaymentMethod('money')} className="hidden" />
+                <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'money' ? 'border-orange-500' : 'border-neutral-600'}`}>
+                  {paymentMethod === 'money' && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full" />}
+                </div>
+                <span className="font-medium">Pagar em dinheiro</span>
               </div>
-              <span className="font-medium">Combinar no WhatsApp</span>
+              
+              {paymentMethod === 'money' && (
+                <div className="mt-4 ml-8 space-y-3 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm text-neutral-400">Troco para quanto? (Deixe em branco se não precisar)</span>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">R$</span>
+                      <input 
+                        type="number" 
+                        placeholder="Ex: 50" 
+                        value={changeFor}
+                        onChange={(e) => setChangeFor(e.target.value)}
+                        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg pl-9 pr-4 py-2 text-sm focus:ring-1 focus:ring-orange-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </label>
 
             <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>

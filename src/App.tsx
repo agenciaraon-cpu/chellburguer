@@ -15,6 +15,22 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('login');
   const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [availability, setAvailability] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('chell_item_availability');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const toggleAvailability = (id: string) => {
+    setAvailability(prev => {
+      const next = { ...prev, [id]: prev[id] === false ? true : false };
+      localStorage.setItem('chell_item_availability', JSON.stringify(next));
+      return next;
+    });
+  };
 
   const handleLogin = (userData: User) => {
     setUser(userData);
@@ -72,7 +88,9 @@ export default function App() {
               user={user}
               cart={cart} 
               onAddToCart={handleAddToCart} 
-              onViewCart={() => setCurrentScreen('cart')} 
+              onViewCart={() => setCurrentScreen('cart')}
+              availability={availability}
+              onToggleAvailability={toggleAvailability}
             />
           )}
           

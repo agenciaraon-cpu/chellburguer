@@ -14,7 +14,9 @@ export function LoginScreen({ onLogin }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && phone.trim()) {
-      onLogin({ name, phone });
+      const cleanPhone = phone.replace(/\D/g, '');
+      const isAdmin = name.toLowerCase() === 'chelladmin' && cleanPhone === '75998015610';
+      onLogin({ name, phone, isAdmin });
     }
   };
 

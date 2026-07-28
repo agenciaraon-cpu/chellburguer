@@ -9,9 +9,11 @@ interface Props {
   cart: CartItem[];
   onAddToCart: (item: CartItem) => void;
   onViewCart: () => void;
+  availability: Record<string, boolean>;
+  onToggleAvailability: (id: string) => void;
 }
 
-export function MenuScreen({ user, cart, onAddToCart, onViewCart }: Props) {
+export function MenuScreen({ user, cart, onAddToCart, onViewCart, availability, onToggleAvailability }: Props) {
   const [imageError, setImageError] = React.useState(false);
 
   const burgers = menuItems.filter(item => item.category === 'burger');
@@ -55,9 +57,21 @@ export function MenuScreen({ user, cart, onAddToCart, onViewCart }: Props) {
             Hambúrgueres
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {burgers.map(item => (
-              <MenuItemCard key={item.id} item={item} onAdd={onAddToCart} />
-            ))}
+            {burgers.map(item => {
+              const isAvailable = availability[item.id] !== false;
+              return (
+                <MenuItemCard 
+                  key={item.id} 
+                  item={item} 
+                  onAdd={onAddToCart} 
+                  isAdmin={user.isAdmin} 
+                  isAvailable={isAvailable} 
+                  onToggleAvailability={() => onToggleAvailability(item.id)} 
+                  availability={availability}
+                  onToggleAddonAvailability={onToggleAvailability}
+                />
+              );
+            })}
           </div>
         </section>
 
@@ -68,9 +82,21 @@ export function MenuScreen({ user, cart, onAddToCart, onViewCart }: Props) {
             Bebidas
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {drinks.map(item => (
-              <MenuItemCard key={item.id} item={item} onAdd={onAddToCart} />
-            ))}
+            {drinks.map(item => {
+              const isAvailable = availability[item.id] !== false;
+              return (
+                <MenuItemCard 
+                  key={item.id} 
+                  item={item} 
+                  onAdd={onAddToCart} 
+                  isAdmin={user.isAdmin} 
+                  isAvailable={isAvailable} 
+                  onToggleAvailability={() => onToggleAvailability(item.id)}
+                  availability={availability}
+                  onToggleAddonAvailability={onToggleAvailability}
+                />
+              );
+            })}
           </div>
         </section>
       </main>

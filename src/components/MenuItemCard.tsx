@@ -6,9 +6,14 @@ import { AVAILABLE_ADDONS } from '../data';
 interface Props {
   item: MenuItem;
   onAdd: (item: CartItem) => void;
+  isAdmin?: boolean;
+  isAvailable?: boolean;
+  onToggleAvailability?: () => void;
+  availability?: Record<string, boolean>;
+  onToggleAddonAvailability?: (id: string) => void;
 }
 
-export function MenuItemCard({ item, onAdd }: Props) {
+export function MenuItemCard({ item, onAdd, isAdmin, isAvailable = true, onToggleAvailability, availability = {}, onToggleAddonAvailability }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [observation, setObservation] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -52,8 +57,10 @@ export function MenuItemCard({ item, onAdd }: Props) {
     <>
       {/* Compact Square Card */}
       <div 
-        onClick={() => setIsOpen(true)}
-        className="bg-neutral-900 rounded-2xl overflow-hidden shadow-lg flex flex-col cursor-pointer hover:ring-2 hover:ring-orange-500 transition-all active:scale-95 aspect-square relative group"
+        onClick={() => {
+          if (isAvailable || isAdmin) setIsOpen(true);
+        }}
+        className={`bg-neutral-900 rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all aspect-square relative group ${isAvailable || isAdmin ? 'cursor-pointer hover:ring-2 hover:ring-orange-500 active:scale-95' : 'opacity-50 cursor-not-allowed'}`}
       >
         <img 
           src={item.image} 
@@ -62,7 +69,10 @@ export function MenuItemCard({ item, onAdd }: Props) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-3">
           <h3 className="text-sm font-black text-white leading-tight line-clamp-2">{item.name}</h3>
-          <p className="text-orange-400 font-bold text-sm mt-1">R$ {item.price.toFixed(2)}</p>
+          <div className="flex justify-between items-center mt-1">
+            <p className="text-orange-400 font-bold text-sm">R$ {item.price.toFixed(2)}</p>
+            {!isAvailable && <span className="text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full uppercase">Em falta</span>}
+          </div>
         </div>
       </div>
 
@@ -92,6 +102,17 @@ export function MenuItemCard({ item, onAdd }: Props) {
             </div>
             
             <div className="p-5 flex flex-col overflow-y-auto">
+              {isAdmin && (
+                <div className="mb-4 bg-neutral-950 p-3 rounded-xl border border-neutral-800 flex justify-between items-center">
+                  <span className="text-sm font-bold text-neutral-300">Modo Admin: Disponível?</span>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onToggleAvailability?.(); }}
+                    className={`w-12 h-6 rounded-full transition-colors relative ${isAvailable ? 'bg-green-500' : 'bg-neutral-700'}`}
+                  >
+                    <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${isAvailable ? 'left-7' : 'left-1'}`} />
+                  </button>
+                </div>
+              )}
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-xl font-black text-neutral-100">{item.name}</h3>
                 <span className="text-orange-500 font-bold text-lg whitespace-nowrap ml-4">
@@ -109,20 +130,38 @@ export function MenuItemCard({ item, onAdd }: Props) {
                     Adicionais
                   </label>
                   <div className="space-y-2">
-                    {AVAILABLE_ADDONS.map(addon => (
-                      <label key={addon.id} className="flex items-center justify-between p-3 rounded-xl border border-neutral-800 bg-neutral-950/50 cursor-pointer hover:border-orange-500/50 transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 rounded border-neutral-700 text-orange-500 focus:ring-orange-500 focus:ring-offset-neutral-950 bg-neutral-900"
-                            checked={selectedAddons.some(a => a.id === addon.id)}
-                            onChange={() => handleAddonToggle(addon)}
-                          />
-                          <span className="text-sm font-medium text-neutral-200">{addon.name}</span>
+                    {AVAILABLE_ADDONS.map(addon => {
+                      const isAddonAvailable = availability[addon.id] !== false;
+                      
+                      return (
+                        <div key={addon.id} className={`flex items-center justify-between p-3 rounded-xl border border-neutral-800 ${isAddonAvailable || isAdmin ? 'bg-neutral-950/50' : 'bg-neutral-900 opacity-50'} transition-colors`}>
+                          <label className={`flex items-center space-x-3 flex-1 ${isAddonAvailable ? 'cursor-pointer hover:border-orange-500/50' : 'cursor-not-allowed'}`}>
+                            <input 
+                              type="checkbox" 
+                              className="w-4 h-4 rounded border-neutral-700 text-orange-500 focus:ring-orange-500 focus:ring-offset-neutral-950 bg-neutral-900"
+                              checked={selectedAddons.some(a => a.id === addon.id)}
+                              onChange={() => isAddonAvailable && handleAddonToggle(addon)}
+                              disabled={!isAddonAvailable}
+                            />
+                            <span className="text-sm font-medium text-neutral-200">
+                              {addon.name}
+                              {!isAddonAvailable && <span className="ml-2 text-[10px] font-bold bg-red-600 text-white px-2 py-0.5 rounded-full uppercase">Em falta</span>}
+                            </span>
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-bold text-orange-400">+ R$ {addon.price.toFixed(2)}</span>
+                            {isAdmin && (
+                              <button 
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleAddonAvailability?.(addon.id); }}
+                                className={`w-10 h-5 rounded-full transition-colors relative ${isAddonAvailable ? 'bg-green-500' : 'bg-neutral-700'}`}
+                              >
+                                <div className={`w-3 h-3 rounded-full bg-white absolute top-1 transition-transform ${isAddonAvailable ? 'left-6' : 'left-1'}`} />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-sm font-bold text-orange-400">+ R$ {addon.price.toFixed(2)}</span>
-                      </label>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
