@@ -21,7 +21,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     number: '',
     reference: ''
   });
-  const [paymentMethod, setPaymentMethod] = useState<'money' | 'pix' | 'card'>('money');
+  const [paymentMethod, setPaymentMethod] = useState<'money' | 'pix' | 'card' | 'pickup'>('money');
   const [cardType, setCardType] = useState<'débito' | 'crédito' | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
   const [changeFor, setChangeFor] = useState('');
@@ -84,7 +84,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
 
         const distance = getDistanceFromLatLonInKm(restaurantLat, restaurantLon, customerLat, customerLon);
         
-        if (distance <= 2) {
+        if (distance <= 3) {
           setDeliveryFee(8.00);
         } else if (distance <= 4) {
           setDeliveryFee(10.00);
@@ -168,7 +168,8 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     const addonsTotal = (item?.addons || []).reduce((addonSum, addon) => addonSum + addon.price, 0);
     return sum + ((itemPrice + addonsTotal) * quantity);
   }, 0);
-  const total = subtotal + deliveryFee;
+  const currentDeliveryFee = paymentMethod === 'pickup' ? 0 : deliveryFee;
+  const total = subtotal + currentDeliveryFee;
 
   const handleCopyPix = () => {
     navigator.clipboard.writeText(PIX_KEY);
@@ -177,9 +178,15 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   };
 
   const handleCheckout = () => {
-    if (!address.cep || !address.street || !address.neighborhood || !address.city || !address.number) {
-      alert('Por favor, preencha o CEP e o endereço de entrega corretamente para calcular a entrega.');
-      return;
+    if (paymentMethod !== 'pickup') {
+      if (!address.cep) {
+        alert('Por favor, o CEP é obrigatório para realizar o pedido.');
+        return;
+      }
+      if (!address.street || !address.neighborhood || !address.city || !address.number) {
+        alert('Por favor, preencha o endereço de entrega corretamente.');
+        return;
+      }
     }
 
     if (paymentMethod === 'card' && !cardType) {
@@ -209,15 +216,21 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     });
     
     orderText += `\nSubtotal: R$ ${subtotal.toFixed(2)}\n`;
-    orderText += `Taxa de Entrega: R$ ${deliveryFee.toFixed(2)}\n`;
+    if (paymentMethod === 'pickup') {
+      orderText += `Tipo: Retirar no estabelecimento\n`;
+    } else {
+      orderText += `Taxa de Entrega: R$ ${currentDeliveryFee.toFixed(2)}\n`;
+    }
     orderText += `TOTAL: R$ ${total.toFixed(2)}\n\n`;
     
-    orderText += `ENDEREÇO DE ENTREGA:\n`;
-    orderText += `${address.street}, Nº ${address.number}\n`;
-    orderText += `Bairro: ${address.neighborhood}\n`;
-    orderText += `Cidade: ${address.city}\n`;
-    if (address.reference) {
-      orderText += `Ref: ${address.reference}\n`;
+    if (paymentMethod !== 'pickup') {
+      orderText += `ENDEREÇO DE ENTREGA:\n`;
+      orderText += `${address.street}, Nº ${address.number}\n`;
+      orderText += `Bairro: ${address.neighborhood}\n`;
+      orderText += `Cidade: ${address.city}\n`;
+      if (address.reference) {
+        orderText += `Ref: ${address.reference}\n`;
+      }
     }
 
     let paymentInfo = '';
@@ -225,8 +238,10 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
       paymentInfo = 'Pix pelo App (Comprovante a seguir)';
     } else if (paymentMethod === 'card') {
       paymentInfo = `Pagar na entrega com cartão (${cardType})`;
-    } else {
+    } else if (paymentMethod === 'money') {
       paymentInfo = `Pagar em dinheiro${changeFor ? ` (Troco para R$ ${changeFor})` : ''}`;
+    } else if (paymentMethod === 'pickup') {
+      paymentInfo = `Pagamento no estabelecimento`;
     }
     orderText += `\nPAGAMENTO: ${paymentInfo}`;
 
@@ -319,27 +334,28 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
             </div>
             <div className="flex justify-between items-center text-neutral-400">
               <span>Taxa de Entrega</span>
-              <span>{isCalculatingFee ? <span className="text-xs text-orange-500 animate-pulse">Calculando...</span> : hasCalculatedFee ? <span>R$ {deliveryFee.toFixed(2)}</span> : <span>A calcular</span>}</span>
+              <span>{isCalculatingFee ? <span className="text-xs text-orange-500 animate-pulse">Calculando...</span> : paymentMethod === 'pickup' ? <span className="text-green-500 font-bold">Grátis</span> : hasCalculatedFee ? <span>R$ {deliveryFee.toFixed(2)}</span> : <span>A calcular</span>}</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-neutral-800/50">
               <span className="text-neutral-300 font-bold">Total do Pedido</span>
               <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                <span>R$ </span><span>{hasCalculatedFee ? total.toFixed(2) : subtotal.toFixed(2)}</span>
+                <span>R$ </span><span>{(paymentMethod === 'pickup' || hasCalculatedFee) ? total.toFixed(2) : subtotal.toFixed(2)}</span>
               </span>
             </div>
           </div>
         </section>
 
         {/* Address Form */}
-        <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-5 space-y-4">
-          <h2 className="text-lg font-bold flex items-center text-neutral-100">
-            <MapPin size={20} className="text-neutral-500 mr-2" />
-            Endereço de Entrega
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <input type="text" placeholder="CEP" value={address.cep} onChange={handleCepChange} maxLength={9} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
-            </div>
+        {paymentMethod !== 'pickup' && (
+          <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-5 space-y-4">
+            <h2 className="text-lg font-bold flex items-center text-neutral-100">
+              <MapPin size={20} className="text-neutral-500 mr-2" />
+              Endereço de Entrega
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <input type="text" placeholder="CEP (Obrigatório)" value={address.cep} onChange={handleCepChange} maxLength={9} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              </div>
             <div className="md:col-span-2">
               <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} onBlur={() => calculateDeliveryFee(address.street, address.neighborhood, address.city)} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
             </div>
@@ -357,6 +373,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
             </div>
           </div>
         </section>
+        )}
 
         {/* Payment */}
         <section className="bg-neutral-900 rounded-2xl border border-neutral-800 p-5 space-y-4">
@@ -450,6 +467,15 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
                   </div>
                 </div>
               )}
+            </label>
+            <label className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${paymentMethod === 'pickup' ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-800 bg-neutral-950'}`}>
+              <div className="flex items-center">
+                <input type="radio" name="payment" checked={paymentMethod === 'pickup'} onChange={() => setPaymentMethod('pickup')} className="hidden" />
+                <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'pickup' ? 'border-orange-500' : 'border-neutral-600'}`}>
+                  {paymentMethod === 'pickup' && <div className="w-2.5 h-2.5 bg-orange-500 rounded-full" />}
+                </div>
+                <span className="font-medium">Retirar no estabelecimento</span>
+              </div>
             </label>
           </div>
         </section>
