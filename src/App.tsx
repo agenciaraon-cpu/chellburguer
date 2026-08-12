@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, CartItem } from './types';
 import { LoginScreen } from './components/LoginScreen';
 import { MenuScreen } from './components/MenuScreen';
@@ -15,21 +15,39 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('login');
   const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [availability, setAvailability] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem('chell_item_availability');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [availability, setAvailability] = useState<Record<string, boolean>>({});
 
-  const toggleAvailability = (id: string) => {
-    setAvailability(prev => {
-      const next = { ...prev, [id]: prev[id] === false ? true : false };
-      localStorage.setItem('chell_item_availability', JSON.stringify(next));
-      return next;
-    });
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      try {
+        const res = await fetch('/api/availability');
+        if (res.ok) {
+          const data = await res.json();
+          setAvailability(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch availability', err);
+      }
+    };
+    
+    fetchAvailability();
+    const interval = setInterval(fetchAvailability, 3000); // Poll every 3 seconds for real-time updates
+    return () => clearInterval(interval);
+  }, []);
+
+  const toggleAvailability = async (id: string) => {
+    const nextVal = availability[id] === false ? true : false;
+    setAvailability(prev => ({ ...prev, [id]: nextVal }));
+    
+    try {
+      await fetch('/api/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, available: nextVal })
+      });
+    } catch (err) {
+      console.error('Failed to update availability', err);
+    }
   };
 
   const handleLogin = (userData: User) => {

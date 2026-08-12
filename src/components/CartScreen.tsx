@@ -25,9 +25,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
   const [cardType, setCardType] = useState<'débito' | 'crédito' | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
   const [changeFor, setChangeFor] = useState('');
-  const [deliveryFee, setDeliveryFee] = useState(0);
-  const [isCalculatingFee, setIsCalculatingFee] = useState(false);
-  const [hasCalculatedFee, setHasCalculatedFee] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState(10.00);
 
   // Haversine formula to calculate distance between two coordinates in km
   const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -44,63 +42,9 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
     return d;
   };
 
-  const calculateDeliveryFee = async (street: string, neighborhood: string, city: string) => {
-    if (!city) return;
-    setIsCalculatingFee(true);
-    try {
-      let geoData: any[] = [];
-      const headers = {
-        'Accept-Language': 'pt-BR,pt;q=0.9',
-      };
-      
-      // 1. Tenta com Rua + Cidade
-      if (street) {
-        const query1 = `${street}, ${city}, BA`;
-        const res1 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query1)}&email=agenciaraon@gmail.com`, { headers });
-        if (res1.ok) geoData = await res1.json();
-      }
-
-      // 2. Se não encontrar, tenta com Bairro + Cidade
-      if ((!geoData || geoData.length === 0) && neighborhood) {
-        const query2 = `${neighborhood}, ${city}, BA`;
-        const res2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query2)}&email=agenciaraon@gmail.com`, { headers });
-        if (res2.ok) geoData = await res2.json();
-      }
-
-      // 3. Se não encontrar, tenta apenas Cidade
-      if (!geoData || geoData.length === 0) {
-        const query3 = `${city}, BA`;
-        const res3 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query3)}&email=agenciaraon@gmail.com`, { headers });
-        if (res3.ok) geoData = await res3.json();
-      }
-      
-      if (geoData && geoData.length > 0) {
-        const customerLat = parseFloat(geoData[0].lat);
-        const customerLon = parseFloat(geoData[0].lon);
-        
-        // Restaurant coordinates (Alagoinhas Velha, Alagoinhas)
-        const restaurantLat = -12.1332908;
-        const restaurantLon = -38.4062660;
-
-        const distance = getDistanceFromLatLonInKm(restaurantLat, restaurantLon, customerLat, customerLon);
-        
-        if (distance <= 3) {
-          setDeliveryFee(8.00);
-        } else if (distance <= 4) {
-          setDeliveryFee(10.00);
-        } else {
-          setDeliveryFee(12.00);
-        }
-      } else {
-        setDeliveryFee(10.00); // Default if coordinate not found
-      }
-    } catch (geoErr) {
-      console.error('Erro ao buscar coordenadas:', geoErr);
-      setDeliveryFee(10.00);
-    } finally {
-      setHasCalculatedFee(true);
-      setIsCalculatingFee(false);
-    }
+  const calculateDeliveryFee = async () => {
+    // The fee is fixed at R$10.00
+    setDeliveryFee(10.00);
   };
 
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,7 +98,7 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
             ...newAddress,
           }));
 
-          await calculateDeliveryFee(newAddress.street, newAddress.neighborhood, newAddress.city);
+          await calculateDeliveryFee();
         }
       } catch (err) {
         console.error('Erro ao buscar CEP:', err);
@@ -334,12 +278,12 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
             </div>
             <div className="flex justify-between items-center text-neutral-400">
               <span>Taxa de Entrega</span>
-              <span>{isCalculatingFee ? <span className="text-xs text-orange-500 animate-pulse">Calculando...</span> : paymentMethod === 'pickup' ? <span className="text-green-500 font-bold">Grátis</span> : hasCalculatedFee ? <span>R$ {deliveryFee.toFixed(2)}</span> : <span>A calcular</span>}</span>
+              <span>{paymentMethod === 'pickup' ? <span className="text-green-500 font-bold">Grátis</span> : <span>R$ {deliveryFee.toFixed(2)}</span>}</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-neutral-800/50">
               <span className="text-neutral-300 font-bold">Total do Pedido</span>
               <span className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                <span>R$ </span><span>{(paymentMethod === 'pickup' || hasCalculatedFee) ? total.toFixed(2) : subtotal.toFixed(2)}</span>
+                <span>R$ </span><span>{total.toFixed(2)}</span>
               </span>
             </div>
           </div>
@@ -357,13 +301,13 @@ export function CartScreen({ cart, user, onUpdateQuantity, onRemoveItem, onBack,
                 <input type="text" placeholder="CEP (Obrigatório)" value={address.cep} onChange={handleCepChange} maxLength={9} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
               </div>
             <div className="md:col-span-2">
-              <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} onBlur={() => calculateDeliveryFee(address.street, address.neighborhood, address.city)} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              <input type="text" placeholder="Rua" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} onBlur={() => calculateDeliveryFee()} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
             </div>
             <div>
               <input type="text" placeholder="Número" value={address.number} onChange={e => setAddress({...address, number: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
             </div>
             <div>
-              <input type="text" placeholder="Bairro" value={address.neighborhood} onChange={e => setAddress({...address, neighborhood: e.target.value})} onBlur={() => calculateDeliveryFee(address.street, address.neighborhood, address.city)} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
+              <input type="text" placeholder="Bairro" value={address.neighborhood} onChange={e => setAddress({...address, neighborhood: e.target.value})} onBlur={() => calculateDeliveryFee()} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
             </div>
             <div className="md:col-span-2">
               <input type="text" placeholder="Cidade" value={address.city} onChange={e => setAddress({...address, city: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-orange-500 outline-none" />
