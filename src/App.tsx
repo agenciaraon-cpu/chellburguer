@@ -8,6 +8,8 @@ import { User, CartItem } from './types';
 import { LoginScreen } from './components/LoginScreen';
 import { MenuScreen } from './components/MenuScreen';
 import { CartScreen } from './components/CartScreen';
+import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { db } from './firebase';
 
 type Screen = 'login' | 'menu' | 'cart';
 
@@ -19,57 +21,62 @@ export default function App() {
   const [isStoreOpen, setIsStoreOpen] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [availRes, storeRes] = await Promise.all([
-          fetch('/api/availability'),
-          fetch('/api/store-status')
-        ]);
-        if (availRes.ok) {
-          const data = await availRes.json();
-          setAvailability(data);
-        }
-        if (storeRes.ok) {
-          const storeData = await storeRes.json();
-          setIsStoreOpen(storeData.isOpen);
-        }
-      } catch (err) {
-        console.error('Failed to fetch data', err);
-      }
-    };
+    // Reference to the store settings document in Firestore
+    const settingsRef = doc(db, 'store', 'settings');
     
-    fetchData();
-    const interval = setInterval(fetchData, 3000); // Poll every 3 seconds for real-time updates
-    return () => clearInterval(interval);
+    // Subscribe to real-time updates
+    const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.isStoreOpen !== undefined) {
+          setIsStoreOpen(data.isStoreOpen);
+        }
+        if (data.availability) {
+          setAvailability(data.availability);
+        }
+      } else {
+        // Create the document if it doesn't exist
+        setDoc(settingsRef, {
+          isStoreOpen: true,
+          availability: {}
+        });
+      }
+    }, (err) => {
+      console.error('Failed to listen to Firestore updates:', err);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const toggleStoreStatus = async () => {
     const nextVal = !isStoreOpen;
+    // Optimistic update
     setIsStoreOpen(nextVal);
     
     try {
-      await fetch('/api/store-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isOpen: nextVal })
-      });
+      const settingsRef = doc(db, 'store', 'settings');
+      await setDoc(settingsRef, { isStoreOpen: nextVal }, { merge: true });
     } catch (err) {
       console.error('Failed to update store status', err);
+      // Revert on error
+      setIsStoreOpen(!nextVal);
     }
   };
 
   const toggleAvailability = async (id: string) => {
     const nextVal = availability[id] === false ? true : false;
-    setAvailability(prev => ({ ...prev, [id]: nextVal }));
+    const nextAvailability = { ...availability, [id]: nextVal };
+    
+    // Optimistic update
+    setAvailability(nextAvailability);
     
     try {
-      await fetch('/api/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, available: nextVal })
-      });
+      const settingsRef = doc(db, 'store', 'settings');
+      await setDoc(settingsRef, { availability: nextAvailability }, { merge: true });
     } catch (err) {
       console.error('Failed to update availability', err);
+      // Revert on error
+      setAvailability(availability);
     }
   };
 
