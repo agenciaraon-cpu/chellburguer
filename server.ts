@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 // In-memory availability store
 // Key: item id, Value: boolean (true = available, false = unavailable)
 const availabilityStore: Record<string, boolean> = {};
+let isStoreOpen = true;
 
 async function startServer() {
   const app = express();
@@ -13,6 +14,20 @@ async function startServer() {
   app.use(express.json());
 
   // API Routes
+  app.get('/api/store-status', (req, res) => {
+    res.json({ isOpen: isStoreOpen });
+  });
+
+  app.post('/api/store-status', (req, res) => {
+    const { isOpen } = req.body;
+    if (typeof isOpen === 'boolean') {
+      isStoreOpen = isOpen;
+      res.json({ success: true, isOpen: isStoreOpen });
+    } else {
+      res.status(400).json({ error: 'Invalid data' });
+    }
+  });
+
   app.get('/api/availability', (req, res) => {
     res.json(availabilityStore);
   });

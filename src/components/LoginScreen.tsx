@@ -4,9 +4,10 @@ import { Flame } from 'lucide-react';
 
 interface Props {
   onLogin: (user: User) => void;
+  isStoreOpen: boolean;
 }
 
-export function LoginScreen({ onLogin }: Props) {
+export function LoginScreen({ onLogin, isStoreOpen }: Props) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [imageError, setImageError] = useState(false);
@@ -16,19 +17,32 @@ export function LoginScreen({ onLogin }: Props) {
     if (name.trim() && phone.trim()) {
       const cleanPhone = phone.replace(/\D/g, '');
       const isAdmin = name.toLowerCase() === 'chelladmin' && cleanPhone === '75998015610';
+      
+      if (!isStoreOpen && !isAdmin) {
+        alert('A loja está fechada no momento. Apenas administradores podem acessar.');
+        return;
+      }
+
       onLogin({ name, phone, isAdmin });
     }
   };
 
   return (
     <div className="h-full overflow-y-auto bg-neutral-950 flex flex-col items-center justify-center p-6 text-neutral-100">
-      <div className="w-full max-w-md bg-neutral-900 p-8 rounded-2xl shadow-2xl border border-neutral-800">
-        <div className="flex flex-col items-center mb-8">
+      <div className="w-full max-w-md bg-neutral-900 p-8 rounded-2xl shadow-2xl border border-neutral-800 relative">
+        {/* Store Status Indicator */}
+        <div className="absolute top-4 right-4 flex items-center space-x-2 bg-neutral-950/50 backdrop-blur-sm border border-neutral-800 px-3 py-1.5 rounded-full">
+          <div className={`w-2.5 h-2.5 rounded-full ${isStoreOpen ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
+          <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
+            {isStoreOpen ? 'Loja Aberta' : 'Loja Fechada'}
+          </span>
+        </div>
+        <div className="flex flex-col items-center mt-6 mb-8">
           {!imageError ? (
             <img 
               src="/image.png" 
               alt="Chell Burger Logo" 
-              className="w-full max-w-[240px] h-auto object-contain mb-2 drop-shadow-2xl"
+              className="w-full max-w-[180px] h-auto object-contain mb-2 drop-shadow-2xl"
               onError={() => setImageError(true)}
             />
           ) : (
@@ -75,10 +89,19 @@ export function LoginScreen({ onLogin }: Props) {
           </div>
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold text-lg rounded-xl px-4 py-4 mt-4 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 active:scale-[0.98] transition-all"
+            className={`w-full text-white font-bold text-lg rounded-xl px-4 py-4 mt-4 shadow-lg active:scale-[0.98] transition-all ${
+              isStoreOpen 
+                ? 'bg-gradient-to-r from-orange-500 to-red-600 shadow-orange-500/25 hover:shadow-orange-500/40' 
+                : 'bg-neutral-800 shadow-none border border-neutral-700'
+            }`}
           >
-            Ver Cardápio
+            {isStoreOpen ? 'Ver Cardápio' : 'Entrar (Apenas Admin)'}
           </button>
+          {!isStoreOpen && (
+            <p className="text-center text-red-500 text-sm mt-4 font-medium animate-pulse">
+              A loja está fechada no momento.
+            </p>
+          )}
         </form>
       </div>
     </div>

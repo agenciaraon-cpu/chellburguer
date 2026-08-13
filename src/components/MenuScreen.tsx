@@ -11,9 +11,11 @@ interface Props {
   onViewCart: () => void;
   availability: Record<string, boolean>;
   onToggleAvailability: (id: string) => void;
+  isStoreOpen: boolean;
+  onToggleStoreStatus: () => void;
 }
 
-export function MenuScreen({ user, cart, onAddToCart, onViewCart, availability, onToggleAvailability }: Props) {
+export function MenuScreen({ user, cart, onAddToCart, onViewCart, availability, onToggleAvailability, isStoreOpen, onToggleStoreStatus }: Props) {
   const [imageError, setImageError] = React.useState(false);
 
   const burgers = menuItems.filter(item => item.category === 'burger');
@@ -26,21 +28,35 @@ export function MenuScreen({ user, cart, onAddToCart, onViewCart, availability, 
       {/* Header */}
       <header className="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            {!imageError ? (
-              <img 
-                src="/image.png" 
-                alt="Chell Burger" 
-                className="h-8 w-auto object-contain"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Flame className="text-orange-500" size={24} />
-                <h1 className="text-xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-red-600">
-                  Chell Burger
-                </h1>
-              </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              {!imageError ? (
+                <img 
+                  src="/image.png" 
+                  alt="Chell Burger" 
+                  className="h-8 w-auto object-contain"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Flame className="text-orange-500" size={24} />
+                  <h1 className="text-xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-red-600">
+                    Chell Burger
+                  </h1>
+                </div>
+              )}
+            </div>
+            
+            {user.isAdmin && (
+              <button 
+                onClick={onToggleStoreStatus}
+                className="flex items-center space-x-2 bg-neutral-950 border border-neutral-800 px-3 py-1.5 rounded-full hover:bg-neutral-800 transition-colors"
+              >
+                <div className={`w-2.5 h-2.5 rounded-full ${isStoreOpen ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300">
+                  {isStoreOpen ? 'Fechar Loja' : 'Abrir Loja'}
+                </span>
+              </button>
             )}
           </div>
           <div className="text-sm font-medium text-neutral-300 bg-neutral-800/50 px-3 py-1.5 rounded-full border border-neutral-700/50">

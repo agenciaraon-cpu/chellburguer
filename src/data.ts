@@ -23,7 +23,7 @@ export const menuItems: MenuItem[] = [
     description: 'Pão brioche, Alface, Tomate, Blend 150g, Queijo cheddar, Bacon, Queijo coalho, Banana da terra, Geleia de pimenta, Maionese verde',
     price: 37.00,
     category: 'burger',
-    image: '/no12.png'
+    image: '/no12nova.jpeg'
   },
   {
     id: 'b3',

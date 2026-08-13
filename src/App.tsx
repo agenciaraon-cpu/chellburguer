@@ -16,24 +16,47 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
+  const [isStoreOpen, setIsStoreOpen] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchAvailability = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/availability');
-        if (res.ok) {
-          const data = await res.json();
+        const [availRes, storeRes] = await Promise.all([
+          fetch('/api/availability'),
+          fetch('/api/store-status')
+        ]);
+        if (availRes.ok) {
+          const data = await availRes.json();
           setAvailability(data);
         }
+        if (storeRes.ok) {
+          const storeData = await storeRes.json();
+          setIsStoreOpen(storeData.isOpen);
+        }
       } catch (err) {
-        console.error('Failed to fetch availability', err);
+        console.error('Failed to fetch data', err);
       }
     };
     
-    fetchAvailability();
-    const interval = setInterval(fetchAvailability, 3000); // Poll every 3 seconds for real-time updates
+    fetchData();
+    const interval = setInterval(fetchData, 3000); // Poll every 3 seconds for real-time updates
     return () => clearInterval(interval);
   }, []);
+
+  const toggleStoreStatus = async () => {
+    const nextVal = !isStoreOpen;
+    setIsStoreOpen(nextVal);
+    
+    try {
+      await fetch('/api/store-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isOpen: nextVal })
+      });
+    } catch (err) {
+      console.error('Failed to update store status', err);
+    }
+  };
 
   const toggleAvailability = async (id: string) => {
     const nextVal = availability[id] === false ? true : false;
@@ -99,7 +122,7 @@ export default function App() {
     <div className="min-h-screen bg-black sm:py-8 flex justify-center items-center">
       <div className="w-full h-[100dvh] sm:h-[850px] sm:max-w-[400px] bg-neutral-950 sm:rounded-[3rem] sm:border-[8px] border-neutral-800 overflow-hidden relative shadow-2xl flex flex-col">
         <div className="flex-1 overflow-hidden relative">
-          {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} />}
+          {currentScreen === 'login' && <LoginScreen onLogin={handleLogin} isStoreOpen={isStoreOpen} />}
           
           {currentScreen === 'menu' && user && (
             <MenuScreen 
@@ -109,6 +132,8 @@ export default function App() {
               onViewCart={() => setCurrentScreen('cart')}
               availability={availability}
               onToggleAvailability={toggleAvailability}
+              isStoreOpen={isStoreOpen}
+              onToggleStoreStatus={toggleStoreStatus}
             />
           )}
           
