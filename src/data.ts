@@ -42,6 +42,14 @@ export const menuItems: MenuItem[] = [
     image: '/docetentacao.png'
   },
   {
+    id: 'b5',
+    name: 'Batata frita M',
+    description: 'Porção de batata frita média',
+    price: 10.00,
+    category: 'burger',
+    image: '/batata-frita-m.png'
+  },
+  {
     id: 'd1',
     name: 'Coca-Cola Lata 350ml',
     description: 'Refrigerante em lata',
@@ -80,6 +88,14 @@ export const menuItems: MenuItem[] = [
     price: 10.00,
     category: 'drink',
     image: '/peplitro.png'
+  },
+  {
+    id: 'd6',
+    name: 'Pepsi Lata 350ml',
+    description: 'Refrigerante em lata',
+    price: 6.00,
+    category: 'drink',
+    image: '/pepsi-lata.png'
   }
 ];
 
