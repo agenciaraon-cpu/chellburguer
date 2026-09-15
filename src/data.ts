@@ -46,7 +46,7 @@ export const menuItems: MenuItem[] = [
     name: 'Batata frita M',
     description: 'Porção de batata frita média',
     price: 10.00,
-    category: 'burger',
+    category: 'other',
     image: '/batata-frita-m.png'
   },
   {

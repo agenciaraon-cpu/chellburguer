@@ -20,6 +20,7 @@ export function MenuScreen({ user, cart, onAddToCart, onViewCart, availability, 
 
   const burgers = menuItems.filter(item => item.category === 'burger');
   const drinks = menuItems.filter(item => item.category === 'drink');
+  const others = menuItems.filter(item => item.category === 'other');
   
   const totalItems = cart.reduce((sum, item) => sum + (item?.quantity || 0), 0);
 
@@ -90,6 +91,33 @@ export function MenuScreen({ user, cart, onAddToCart, onViewCart, availability, 
             })}
           </div>
         </section>
+
+        {/* Others Section */}
+        {others.length > 0 && (
+          <section>
+            <h2 className="text-2xl font-black text-neutral-100 mb-6 flex items-center">
+              <span className="bg-red-500 w-1.5 h-6 mr-3 rounded-full"></span>
+              Outras Opções
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {others.map(item => {
+                const isAvailable = availability[item.id] !== false;
+                return (
+                  <MenuItemCard 
+                    key={item.id} 
+                    item={item} 
+                    onAdd={onAddToCart} 
+                    isAdmin={user.isAdmin} 
+                    isAvailable={isAvailable} 
+                    onToggleAvailability={() => onToggleAvailability(item.id)}
+                    availability={availability}
+                    onToggleAddonAvailability={onToggleAvailability}
+                  />
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Drinks Section */}
         <section>
