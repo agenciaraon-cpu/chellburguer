@@ -4,11 +4,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { User, CartItem } from './types';
+import { User, CartItem, MenuItem } from './types';
+import { menuItems } from './data';
 import { LoginScreen } from './components/LoginScreen';
 import { MenuScreen } from './components/MenuScreen';
 import { CartScreen } from './components/CartScreen';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { AddProductModal } from './components/AddProductModal';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 type Screen = 'login' | 'menu' | 'cart';
@@ -19,6 +21,8 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [isStoreOpen, setIsStoreOpen] = useState<boolean>(true);
+  const [customProducts, setCustomProducts] = useState<MenuItem[]>([]);
+  const [addProductCategory, setAddProductCategory] = useState<'burger' | 'drink' | 'other' | null>(null);
   const [confirmAction, setConfirmAction] = useState<{message: string, onConfirm: () => void} | null>(null);
 
   useEffect(() => {
@@ -35,11 +39,15 @@ export default function App() {
         if (data.availability) {
           setAvailability(data.availability);
         }
+        if (Array.isArray(data.customProducts)) {
+          setCustomProducts(data.customProducts);
+        }
       } else {
         // Create the document if it doesn't exist
         setDoc(settingsRef, {
           isStoreOpen: true,
-          availability: {}
+          availability: {},
+          customProducts: []
         });
       }
     }, (err) => {
@@ -102,6 +110,44 @@ export default function App() {
     });
   };
 
+  const handleSaveProduct = async (productData: Omit<MenuItem, 'id'>) => {
+    const newProduct: MenuItem = {
+      ...productData,
+      id: `prod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+    };
+
+    const updated = [...customProducts, newProduct];
+    setCustomProducts(updated);
+
+    try {
+      const settingsRef = doc(db, 'store', 'settings');
+      await setDoc(settingsRef, { customProducts: updated }, { merge: true });
+    } catch (err) {
+      console.error('Failed to save custom product:', err);
+      throw err;
+    }
+  };
+
+  const handleDeleteCustomProduct = (productId: string) => {
+    const item = customProducts.find(p => p.id === productId);
+    if (!item) return;
+
+    setConfirmAction({
+      message: `Tem certeza que deseja excluir "${item.name}" do cardápio?`,
+      onConfirm: async () => {
+        const updated = customProducts.filter(p => p.id !== productId);
+        setCustomProducts(updated);
+        setConfirmAction(null);
+        try {
+          const settingsRef = doc(db, 'store', 'settings');
+          await setDoc(settingsRef, { customProducts: updated }, { merge: true });
+        } catch (err) {
+          console.error('Failed to remove product from Firestore:', err);
+        }
+      }
+    });
+  };
+
   const handleLogin = (userData: User) => {
     setUser(userData);
     setCurrentScreen('menu');
@@ -147,6 +193,9 @@ export default function App() {
     setCurrentScreen('menu');
   };
 
+  // Combine static base items with dynamically added custom products
+  const allMenuItems = [...menuItems, ...customProducts];
+
   return (
     <div className="min-h-screen bg-black sm:py-8 flex justify-center items-center">
       <div className="w-full h-[100dvh] sm:h-[850px] sm:max-w-[400px] bg-neutral-950 sm:rounded-[3rem] sm:border-[8px] border-neutral-800 overflow-hidden relative shadow-2xl flex flex-col">
@@ -157,12 +206,15 @@ export default function App() {
             <MenuScreen 
               user={user}
               cart={cart} 
+              items={allMenuItems}
               onAddToCart={handleAddToCart} 
               onViewCart={() => setCurrentScreen('cart')}
               availability={availability}
               onToggleAvailability={requestToggleAvailability}
               isStoreOpen={isStoreOpen}
               onToggleStoreStatus={requestToggleStoreStatus}
+              onOpenAddProduct={(category) => setAddProductCategory(category)}
+              onDeleteCustomProduct={handleDeleteCustomProduct}
             />
           )}
           
@@ -183,6 +235,16 @@ export default function App() {
             Desenvolvido pela <a href="https://www.instagram.com/somosraon" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-400 transition-colors">@somosraon</a>
           </p>
         </div>
+
+        {/* Modal Adicionar Produto (Apenas Administrador) */}
+        {user?.isAdmin && (
+          <AddProductModal 
+            isOpen={addProductCategory !== null}
+            initialCategory={addProductCategory || 'burger'}
+            onClose={() => setAddProductCategory(null)}
+            onSave={handleSaveProduct}
+          />
+        )}
 
         {confirmAction && (
           <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">

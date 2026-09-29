@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MenuItem, CartItem, Addon } from '../types';
-import { Plus, MessageSquare, X } from 'lucide-react';
+import { Plus, MessageSquare, X, Trash2 } from 'lucide-react';
 import { AVAILABLE_ADDONS } from '../data';
 
 interface Props {
@@ -11,9 +11,10 @@ interface Props {
   onToggleAvailability?: () => void;
   availability?: Record<string, boolean>;
   onToggleAddonAvailability?: (id: string) => void;
+  onDeleteCustomProduct?: (id: string) => void;
 }
 
-export function MenuItemCard({ item, onAdd, isAdmin, isAvailable = true, onToggleAvailability, availability = {}, onToggleAddonAvailability }: Props) {
+export function MenuItemCard({ item, onAdd, isAdmin, isAvailable = true, onToggleAvailability, availability = {}, onToggleAddonAvailability, onDeleteCustomProduct }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [observation, setObservation] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -103,14 +104,32 @@ export function MenuItemCard({ item, onAdd, isAdmin, isAvailable = true, onToggl
             
             <div className="p-5 flex flex-col overflow-y-auto">
               {isAdmin && (
-                <div className="mb-4 bg-neutral-950 p-3 rounded-xl border border-neutral-800 flex justify-between items-center">
-                  <span className="text-sm font-bold text-neutral-300">Modo Admin: Disponível?</span>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); onToggleAvailability?.(); }}
-                    className={`w-12 h-6 rounded-full transition-colors relative ${isAvailable ? 'bg-green-500' : 'bg-neutral-700'}`}
-                  >
-                    <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${isAvailable ? 'left-7' : 'left-1'}`} />
-                  </button>
+                <div className="mb-4 bg-neutral-950 p-3 rounded-xl border border-neutral-800 flex flex-col gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-bold text-neutral-300">Modo Admin: Disponível?</span>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); onToggleAvailability?.(); }}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${isAvailable ? 'bg-green-500' : 'bg-neutral-700'}`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${isAvailable ? 'left-7' : 'left-1'}`} />
+                    </button>
+                  </div>
+                  {item.isCustom && onDeleteCustomProduct && (
+                    <div className="pt-2 border-t border-neutral-800/80 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsOpen(false);
+                          onDeleteCustomProduct(item.id);
+                        }}
+                        className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-950/70 border border-red-900/50 px-2.5 py-1.5 rounded-lg transition-colors font-medium"
+                      >
+                        <Trash2 size={13} />
+                        Excluir este produto
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
               <div className="flex justify-between items-start mb-2">

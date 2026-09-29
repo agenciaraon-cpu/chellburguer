@@ -5,6 +5,7 @@ export interface MenuItem {
   price: number;
   category: 'burger' | 'drink' | 'other';
   image: string;
+  isCustom?: boolean;
 }
 
 export interface Addon {
