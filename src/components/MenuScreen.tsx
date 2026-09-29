@@ -1,7 +1,7 @@
 import React from 'react';
 import { MenuItemCard } from './MenuItemCard';
 import { CartItem, User, MenuItem } from '../types';
-import { ShoppingBag, Flame, Plus } from 'lucide-react';
+import { ShoppingBag, Flame, Plus, RotateCcw } from 'lucide-react';
 
 interface Props {
   user: User;
@@ -15,7 +15,10 @@ interface Props {
   onToggleStoreStatus: () => void;
   onOpenAddProduct?: (category: 'burger' | 'drink' | 'other') => void;
   onDeleteCustomProduct?: (id: string) => void;
+  onDeleteItem?: (id: string) => void;
   onChangeImage?: (item: MenuItem) => void;
+  deletedCount?: number;
+  onOpenRestoreModal?: () => void;
 }
 
 export function MenuScreen({ 
@@ -30,7 +33,10 @@ export function MenuScreen({
   onToggleStoreStatus,
   onOpenAddProduct,
   onDeleteCustomProduct,
-  onChangeImage
+  onDeleteItem,
+  onChangeImage,
+  deletedCount = 0,
+  onOpenRestoreModal
 }: Props) {
   const [imageError, setImageError] = React.useState(false);
 
@@ -65,15 +71,29 @@ export function MenuScreen({
             </div>
             
             {user.isAdmin && (
-              <button 
-                onClick={onToggleStoreStatus}
-                className="flex items-center space-x-2 bg-neutral-950 border border-neutral-800 px-3 py-1.5 rounded-full hover:bg-neutral-800 transition-colors"
-              >
-                <div className={`w-2.5 h-2.5 rounded-full ${isStoreOpen ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300">
-                  {isStoreOpen ? 'Fechar Loja' : 'Abrir Loja'}
-                </span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={onToggleStoreStatus}
+                  className="flex items-center space-x-2 bg-neutral-950 border border-neutral-800 px-3 py-1.5 rounded-full hover:bg-neutral-800 transition-colors"
+                >
+                  <div className={`w-2.5 h-2.5 rounded-full ${isStoreOpen ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300">
+                    {isStoreOpen ? 'Fechar Loja' : 'Abrir Loja'}
+                  </span>
+                </button>
+
+                {deletedCount > 0 && onOpenRestoreModal && (
+                  <button 
+                    type="button"
+                    onClick={onOpenRestoreModal}
+                    title="Ver e restaurar itens removidos"
+                    className="flex items-center space-x-1.5 bg-neutral-950 border border-neutral-800 hover:border-neutral-700 px-2.5 py-1.5 rounded-full hover:bg-neutral-800 transition-colors text-[10px] font-bold text-neutral-400 hover:text-white"
+                  >
+                    <RotateCcw size={12} className="text-orange-400" />
+                    <span>Lixeira ({deletedCount})</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
           <div className="text-sm font-medium text-neutral-300 bg-neutral-800/50 px-3 py-1.5 rounded-full border border-neutral-700/50">
@@ -114,6 +134,7 @@ export function MenuScreen({
                   onToggleAvailability={() => onToggleAvailability(item.id)} 
                   availability={availability}
                   onToggleAddonAvailability={onToggleAvailability}
+                  onDeleteItem={onDeleteItem}
                   onDeleteCustomProduct={onDeleteCustomProduct}
                   onChangeImage={onChangeImage}
                 />
@@ -168,6 +189,7 @@ export function MenuScreen({
                     onToggleAvailability={() => onToggleAvailability(item.id)}
                     availability={availability}
                     onToggleAddonAvailability={onToggleAvailability}
+                    onDeleteItem={onDeleteItem}
                     onDeleteCustomProduct={onDeleteCustomProduct}
                     onChangeImage={onChangeImage}
                   />
@@ -222,6 +244,7 @@ export function MenuScreen({
                   onToggleAvailability={() => onToggleAvailability(item.id)}
                   availability={availability}
                   onToggleAddonAvailability={onToggleAvailability}
+                  onDeleteItem={onDeleteItem}
                   onDeleteCustomProduct={onDeleteCustomProduct}
                   onChangeImage={onChangeImage}
                 />

@@ -11,6 +11,7 @@ interface Props {
   onToggleAvailability?: () => void;
   availability?: Record<string, boolean>;
   onToggleAddonAvailability?: (id: string) => void;
+  onDeleteItem?: (id: string) => void;
   onDeleteCustomProduct?: (id: string) => void;
   onChangeImage?: (item: MenuItem) => void;
 }
@@ -23,6 +24,7 @@ export function MenuItemCard({
   onToggleAvailability, 
   availability = {}, 
   onToggleAddonAvailability, 
+  onDeleteItem,
   onDeleteCustomProduct,
   onChangeImage 
 }: Props) {
@@ -164,19 +166,23 @@ export function MenuItemCard({
                       <span>Trocar Foto deste Produto</span>
                     </button>
                   )}
-                  {item.isCustom && onDeleteCustomProduct && (
-                    <div className="pt-2 border-t border-neutral-800/80 flex justify-end">
+                  {(onDeleteItem || (item.isCustom && onDeleteCustomProduct)) && (
+                    <div className="pt-2 border-t border-neutral-800/80">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsOpen(false);
-                          onDeleteCustomProduct(item.id);
+                          if (onDeleteItem) {
+                            onDeleteItem(item.id);
+                          } else if (onDeleteCustomProduct) {
+                            onDeleteCustomProduct(item.id);
+                          }
                         }}
-                        className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-950/70 border border-red-900/50 px-2.5 py-1.5 rounded-lg transition-colors font-medium"
+                        className="w-full flex items-center justify-center gap-1.5 text-xs text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-950/70 border border-red-900/50 px-3 py-2 rounded-xl transition-colors font-medium"
                       >
                         <Trash2 size={13} />
-                        Excluir este produto
+                        Remover este produto do cardápio
                       </button>
                     </div>
                   )}

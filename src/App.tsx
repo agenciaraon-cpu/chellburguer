@@ -11,6 +11,7 @@ import { MenuScreen } from './components/MenuScreen';
 import { CartScreen } from './components/CartScreen';
 import { AddProductModal } from './components/AddProductModal';
 import { ChangeImageModal } from './components/ChangeImageModal';
+import { RestoreProductsModal } from './components/RestoreProductsModal';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -23,8 +24,10 @@ export default function App() {
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [isStoreOpen, setIsStoreOpen] = useState<boolean>(true);
   const [customProducts, setCustomProducts] = useState<MenuItem[]>([]);
+  const [deletedItemIds, setDeletedItemIds] = useState<string[]>([]);
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [editingImageItem, setEditingImageItem] = useState<MenuItem | null>(null);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [addProductCategory, setAddProductCategory] = useState<'burger' | 'drink' | 'other' | null>(null);
   const [confirmAction, setConfirmAction] = useState<{message: string, onConfirm: () => void} | null>(null);
 
@@ -45,6 +48,9 @@ export default function App() {
         if (Array.isArray(data.customProducts)) {
           setCustomProducts(data.customProducts);
         }
+        if (Array.isArray(data.deletedItemIds)) {
+          setDeletedItemIds(data.deletedItemIds);
+        }
         if (data.imageOverrides && typeof data.imageOverrides === 'object') {
           setImageOverrides(data.imageOverrides);
         }
@@ -54,6 +60,7 @@ export default function App() {
           isStoreOpen: true,
           availability: {},
           customProducts: [],
+          deletedItemIds: [],
           imageOverrides: {}
         });
       }
@@ -171,24 +178,30 @@ export default function App() {
     }
   };
 
-  const handleDeleteCustomProduct = (productId: string) => {
-    const item = customProducts.find(p => p.id === productId);
+  const handleDeleteItem = (productId: string) => {
+    const item = [...menuItems, ...customProducts].find(p => p.id === productId);
     if (!item) return;
 
     setConfirmAction({
-      message: `Tem certeza que deseja excluir "${item.name}" do cardápio?`,
+      message: `Tem certeza que deseja remover "${item.name}" do cardápio?`,
       onConfirm: async () => {
-        const updated = customProducts.filter(p => p.id !== productId);
+        const updatedCustom = customProducts.filter(p => p.id !== productId);
+        const updatedDeletedIds = deletedItemIds.includes(productId) 
+          ? deletedItemIds 
+          : [...deletedItemIds, productId];
+
         const updatedOverrides = { ...imageOverrides };
         delete updatedOverrides[productId];
 
-        setCustomProducts(updated);
+        setCustomProducts(updatedCustom);
+        setDeletedItemIds(updatedDeletedIds);
         setImageOverrides(updatedOverrides);
         setConfirmAction(null);
         try {
           const settingsRef = doc(db, 'store', 'settings');
           await setDoc(settingsRef, { 
-            customProducts: updated,
+            customProducts: updatedCustom,
+            deletedItemIds: updatedDeletedIds,
             imageOverrides: updatedOverrides
           }, { merge: true });
         } catch (err) {
@@ -196,6 +209,19 @@ export default function App() {
         }
       }
     });
+  };
+
+  const handleRestoreItem = async (productId: string) => {
+    const updatedDeletedIds = deletedItemIds.filter(id => id !== productId);
+    setDeletedItemIds(updatedDeletedIds);
+
+    try {
+      const settingsRef = doc(db, 'store', 'settings');
+      await setDoc(settingsRef, { deletedItemIds: updatedDeletedIds }, { merge: true });
+    } catch (err) {
+      console.error('Failed to restore product in Firestore:', err);
+      throw err;
+    }
   };
 
   const handleLogin = (userData: User) => {
@@ -243,11 +269,21 @@ export default function App() {
     setCurrentScreen('menu');
   };
 
-  // Combine static base items with dynamically added custom products and image overrides
-  const allMenuItems = [...menuItems, ...customProducts].map(item => ({
-    ...item,
-    image: imageOverrides[item.id] || item.image
-  }));
+  // Combine static base items with dynamically added custom products, filtering out deleted items and applying image overrides
+  const allMenuItems = [...menuItems, ...customProducts]
+    .filter(item => !deletedItemIds.includes(item.id))
+    .map(item => ({
+      ...item,
+      image: imageOverrides[item.id] || item.image
+    }));
+
+  // List of deleted base items that can be restored
+  const deletedItemsList = menuItems
+    .filter(item => deletedItemIds.includes(item.id))
+    .map(item => ({
+      ...item,
+      image: imageOverrides[item.id] || item.image
+    }));
 
   return (
     <div className="min-h-screen bg-black sm:py-8 flex justify-center items-center">
@@ -267,8 +303,11 @@ export default function App() {
               isStoreOpen={isStoreOpen}
               onToggleStoreStatus={requestToggleStoreStatus}
               onOpenAddProduct={(category) => setAddProductCategory(category)}
-              onDeleteCustomProduct={handleDeleteCustomProduct}
+              onDeleteItem={handleDeleteItem}
+              onDeleteCustomProduct={handleDeleteItem}
               onChangeImage={(item) => setEditingImageItem(item)}
+              deletedCount={deletedItemsList.length}
+              onOpenRestoreModal={() => setIsRestoreModalOpen(true)}
             />
           )}
           
@@ -309,6 +348,16 @@ export default function App() {
             onClose={() => setEditingImageItem(null)}
             onSaveImage={handleUpdateItemImage}
             onResetImage={handleResetItemImage}
+          />
+        )}
+
+        {/* Modal Restaurar Produtos Removidos (Apenas Administrador) */}
+        {user?.isAdmin && (
+          <RestoreProductsModal 
+            isOpen={isRestoreModalOpen}
+            deletedItems={deletedItemsList}
+            onClose={() => setIsRestoreModalOpen(false)}
+            onRestore={handleRestoreItem}
           />
         )}
 
