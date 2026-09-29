@@ -15,6 +15,7 @@ interface Props {
   onToggleStoreStatus: () => void;
   onOpenAddProduct?: (category: 'burger' | 'drink' | 'other') => void;
   onDeleteCustomProduct?: (id: string) => void;
+  onChangeImage?: (item: MenuItem) => void;
 }
 
 export function MenuScreen({ 
@@ -28,7 +29,8 @@ export function MenuScreen({
   isStoreOpen, 
   onToggleStoreStatus,
   onOpenAddProduct,
-  onDeleteCustomProduct
+  onDeleteCustomProduct,
+  onChangeImage
 }: Props) {
   const [imageError, setImageError] = React.useState(false);
 
@@ -113,6 +115,7 @@ export function MenuScreen({
                   availability={availability}
                   onToggleAddonAvailability={onToggleAvailability}
                   onDeleteCustomProduct={onDeleteCustomProduct}
+                  onChangeImage={onChangeImage}
                 />
               );
             })}
@@ -166,6 +169,7 @@ export function MenuScreen({
                     availability={availability}
                     onToggleAddonAvailability={onToggleAvailability}
                     onDeleteCustomProduct={onDeleteCustomProduct}
+                    onChangeImage={onChangeImage}
                   />
                 );
               })}
@@ -219,6 +223,7 @@ export function MenuScreen({
                   availability={availability}
                   onToggleAddonAvailability={onToggleAvailability}
                   onDeleteCustomProduct={onDeleteCustomProduct}
+                  onChangeImage={onChangeImage}
                 />
               );
             })}

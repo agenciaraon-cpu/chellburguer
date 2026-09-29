@@ -10,6 +10,7 @@ import { LoginScreen } from './components/LoginScreen';
 import { MenuScreen } from './components/MenuScreen';
 import { CartScreen } from './components/CartScreen';
 import { AddProductModal } from './components/AddProductModal';
+import { ChangeImageModal } from './components/ChangeImageModal';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -22,6 +23,8 @@ export default function App() {
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [isStoreOpen, setIsStoreOpen] = useState<boolean>(true);
   const [customProducts, setCustomProducts] = useState<MenuItem[]>([]);
+  const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
+  const [editingImageItem, setEditingImageItem] = useState<MenuItem | null>(null);
   const [addProductCategory, setAddProductCategory] = useState<'burger' | 'drink' | 'other' | null>(null);
   const [confirmAction, setConfirmAction] = useState<{message: string, onConfirm: () => void} | null>(null);
 
@@ -42,12 +45,16 @@ export default function App() {
         if (Array.isArray(data.customProducts)) {
           setCustomProducts(data.customProducts);
         }
+        if (data.imageOverrides && typeof data.imageOverrides === 'object') {
+          setImageOverrides(data.imageOverrides);
+        }
       } else {
         // Create the document if it doesn't exist
         setDoc(settingsRef, {
           isStoreOpen: true,
           availability: {},
-          customProducts: []
+          customProducts: [],
+          imageOverrides: {}
         });
       }
     }, (err) => {
@@ -128,6 +135,42 @@ export default function App() {
     }
   };
 
+  const handleUpdateItemImage = async (productId: string, newImageUrl: string) => {
+    const updatedOverrides = { ...imageOverrides, [productId]: newImageUrl };
+    setImageOverrides(updatedOverrides);
+
+    // Also update customProducts if this item is custom
+    const updatedCustom = customProducts.map(p => 
+      p.id === productId ? { ...p, image: newImageUrl } : p
+    );
+    setCustomProducts(updatedCustom);
+
+    try {
+      const settingsRef = doc(db, 'store', 'settings');
+      await setDoc(settingsRef, { 
+        imageOverrides: updatedOverrides,
+        customProducts: updatedCustom 
+      }, { merge: true });
+    } catch (err) {
+      console.error('Failed to update item image:', err);
+      throw err;
+    }
+  };
+
+  const handleResetItemImage = async (productId: string) => {
+    const updatedOverrides = { ...imageOverrides };
+    delete updatedOverrides[productId];
+    setImageOverrides(updatedOverrides);
+
+    try {
+      const settingsRef = doc(db, 'store', 'settings');
+      await setDoc(settingsRef, { imageOverrides: updatedOverrides }, { merge: true });
+    } catch (err) {
+      console.error('Failed to reset item image:', err);
+      throw err;
+    }
+  };
+
   const handleDeleteCustomProduct = (productId: string) => {
     const item = customProducts.find(p => p.id === productId);
     if (!item) return;
@@ -136,11 +179,18 @@ export default function App() {
       message: `Tem certeza que deseja excluir "${item.name}" do cardápio?`,
       onConfirm: async () => {
         const updated = customProducts.filter(p => p.id !== productId);
+        const updatedOverrides = { ...imageOverrides };
+        delete updatedOverrides[productId];
+
         setCustomProducts(updated);
+        setImageOverrides(updatedOverrides);
         setConfirmAction(null);
         try {
           const settingsRef = doc(db, 'store', 'settings');
-          await setDoc(settingsRef, { customProducts: updated }, { merge: true });
+          await setDoc(settingsRef, { 
+            customProducts: updated,
+            imageOverrides: updatedOverrides
+          }, { merge: true });
         } catch (err) {
           console.error('Failed to remove product from Firestore:', err);
         }
@@ -193,8 +243,11 @@ export default function App() {
     setCurrentScreen('menu');
   };
 
-  // Combine static base items with dynamically added custom products
-  const allMenuItems = [...menuItems, ...customProducts];
+  // Combine static base items with dynamically added custom products and image overrides
+  const allMenuItems = [...menuItems, ...customProducts].map(item => ({
+    ...item,
+    image: imageOverrides[item.id] || item.image
+  }));
 
   return (
     <div className="min-h-screen bg-black sm:py-8 flex justify-center items-center">
@@ -215,6 +268,7 @@ export default function App() {
               onToggleStoreStatus={requestToggleStoreStatus}
               onOpenAddProduct={(category) => setAddProductCategory(category)}
               onDeleteCustomProduct={handleDeleteCustomProduct}
+              onChangeImage={(item) => setEditingImageItem(item)}
             />
           )}
           
@@ -243,6 +297,18 @@ export default function App() {
             initialCategory={addProductCategory || 'burger'}
             onClose={() => setAddProductCategory(null)}
             onSave={handleSaveProduct}
+          />
+        )}
+
+        {/* Modal Trocar Imagem do Produto (Apenas Administrador) */}
+        {user?.isAdmin && (
+          <ChangeImageModal
+            isOpen={editingImageItem !== null}
+            item={editingImageItem}
+            hasCustomOverride={Boolean(editingImageItem && imageOverrides[editingImageItem.id])}
+            onClose={() => setEditingImageItem(null)}
+            onSaveImage={handleUpdateItemImage}
+            onResetImage={handleResetItemImage}
           />
         )}
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MenuItem, CartItem, Addon } from '../types';
-import { Plus, MessageSquare, X, Trash2 } from 'lucide-react';
+import { Plus, MessageSquare, X, Trash2, Camera } from 'lucide-react';
 import { AVAILABLE_ADDONS } from '../data';
 
 interface Props {
@@ -12,9 +12,20 @@ interface Props {
   availability?: Record<string, boolean>;
   onToggleAddonAvailability?: (id: string) => void;
   onDeleteCustomProduct?: (id: string) => void;
+  onChangeImage?: (item: MenuItem) => void;
 }
 
-export function MenuItemCard({ item, onAdd, isAdmin, isAvailable = true, onToggleAvailability, availability = {}, onToggleAddonAvailability, onDeleteCustomProduct }: Props) {
+export function MenuItemCard({ 
+  item, 
+  onAdd, 
+  isAdmin, 
+  isAvailable = true, 
+  onToggleAvailability, 
+  availability = {}, 
+  onToggleAddonAvailability, 
+  onDeleteCustomProduct,
+  onChangeImage 
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [observation, setObservation] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -68,6 +79,19 @@ export function MenuItemCard({ item, onAdd, isAdmin, isAvailable = true, onToggl
           alt={item.name} 
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
+        {isAdmin && onChangeImage && (
+          <button
+            type="button"
+            title="Trocar imagem deste produto"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChangeImage(item);
+            }}
+            className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-black/70 hover:bg-orange-500 text-neutral-300 hover:text-white border border-white/20 backdrop-blur-md flex items-center justify-center transition-all active:scale-90 shadow-md"
+          >
+            <Camera size={13} />
+          </button>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-3">
           <h3 className="text-sm font-black text-white leading-tight line-clamp-2">{item.name}</h3>
           <div className="flex justify-between items-center mt-1">
@@ -89,6 +113,19 @@ export function MenuItemCard({ item, onAdd, isAdmin, isAvailable = true, onToggl
                 alt={item.name} 
                 className="w-full h-full object-contain p-2"
               />
+              {isAdmin && onChangeImage && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChangeImage(item);
+                  }}
+                  className="absolute top-4 left-4 z-10 bg-black/70 hover:bg-black/90 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-md border border-white/20 flex items-center gap-1.5 shadow-lg active:scale-95 transition-all"
+                >
+                  <Camera size={14} className="text-orange-400" />
+                  <span>Trocar Imagem</span>
+                </button>
+              )}
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
                 className="absolute bottom-4 right-4 bg-black/50 text-white p-2 rounded-full backdrop-blur-md hover:bg-black/70 transition-colors"
@@ -104,7 +141,7 @@ export function MenuItemCard({ item, onAdd, isAdmin, isAvailable = true, onToggl
             
             <div className="p-5 flex flex-col overflow-y-auto">
               {isAdmin && (
-                <div className="mb-4 bg-neutral-950 p-3 rounded-xl border border-neutral-800 flex flex-col gap-2">
+                <div className="mb-4 bg-neutral-950 p-3 rounded-xl border border-neutral-800 flex flex-col gap-2.5">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-bold text-neutral-300">Modo Admin: Disponível?</span>
                     <button 
@@ -114,6 +151,19 @@ export function MenuItemCard({ item, onAdd, isAdmin, isAvailable = true, onToggl
                       <div className={`w-4 h-4 rounded-full bg-white absolute top-1 transition-transform ${isAvailable ? 'left-7' : 'left-1'}`} />
                     </button>
                   </div>
+                  {onChangeImage && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onChangeImage(item);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-orange-400 hover:text-orange-300 border border-neutral-800 hover:border-orange-500/40 text-xs font-bold transition-colors"
+                    >
+                      <Camera size={14} />
+                      <span>Trocar Foto deste Produto</span>
+                    </button>
+                  )}
                   {item.isCustom && onDeleteCustomProduct && (
                     <div className="pt-2 border-t border-neutral-800/80 flex justify-end">
                       <button
